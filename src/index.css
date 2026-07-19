@@ -1,0 +1,265 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  padding: 0;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Cormorant Infant VF", serif;
+  background-color: black;
+  color:aliceblue;
+}
+
+/*
+  Shared edge masks for any image/canvas that should fade into the background.
+
+  How to reuse elsewhere:
+  - Add the element to the shared selector below, or assign it a class that uses
+    the same mask-image / mask-composite rules.
+  - Keep the mask the same if you want the same CRT look everywhere.
+  - Change the percentages if you want the fade to start earlier or later.
+
+  Why two masks:
+  - The vertical gradient fades the top and bottom edges.
+  - The horizontal gradient fades the left and right edges.
+  - Intersecting them gives a true four-edge fade instead of a center vignette.
+*/
+:root {
+  /* Top/bottom fade. Black means visible; transparent means cut away. */
+  --crt-edge-mask-vertical: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 1) 14%,
+    rgba(0, 0, 0, 1) 86%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  /* Left/right fade. Used together with the vertical mask above. */
+  --crt-edge-mask-horizontal: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 1) 14%,
+    rgba(0, 0, 0, 1) 86%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.crt-wrap {
+  width: 100%;
+  min-height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.crt-wrap,
+.crt-clip {
+  width: 100%;
+  min-height: 100svh;
+}
+
+#hero-canvas {
+  margin: auto;
+}
+
+.page-content {
+  width: min(100% - 1rem, 1200px);
+  margin-inline: auto;
+  position: relative;
+  z-index: 1;
+}
+
+header {
+  width: 100%;
+  padding: 1rem 0;
+  text-align: center;
+}
+#hero-canvas {
+  width: 100%;
+}
+
+h2, h3 {
+  text-align: center;
+}
+
+quote {
+  display: block;
+  text-align: center;
+  padding: 2rem auto;
+}
+
+.GlowCanvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 1;
+}
+
+.hero-image {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  isolation: isolate;
+}
+
+.GlowCanvas,
+.DitherCanvas,
+.hero-image canvas,
+.hero-image img,
+#featured-canvas,
+#featured-artist,
+.related-work {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Apply both masks together so every edge fades, not just the corners. */
+  -webkit-mask-image: var(--crt-edge-mask-vertical), var(--crt-edge-mask-horizontal);
+  mask-image: var(--crt-edge-mask-vertical), var(--crt-edge-mask-horizontal);
+  /* The mask images should not repeat; they should stretch to the full element box. */
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  /* Chromium/WebKit need this composite so the two masks intersect cleanly. */
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+.featured-info {
+  display: grid;
+  grid-template-columns: 2.5fr 1fr;
+  grid-template-rows: auto;
+  align-items: start;
+}
+
+
+
+.art-info {
+  grid-column: 1 / 2;
+  /* fill the grid row height created by the image */
+  height: 100%;
+  min-height: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  /* keep the whole text box inside the row */
+  overflow: hidden;
+}
+
+.art-copy p {
+  line-height: 1.5;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 8; /* show 8 full lines */
+  line-clamp: 8;
+  overflow: hidden;
+}
+
+
+.art-copy {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 2rem; /* leaves room for the link */
+  overflow: hidden;
+}
+
+.art-copy::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4rem;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0, 0, 0, 0.438));
+}
+
+#featured-artist {
+  align-self: start;
+  grid-column: 2 / 3;
+  justify-self: end;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  display: block;
+}
+
+#featured-canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+}
+
+#featured-artist {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  display: block;
+}
+
+.read-more {
+  flex-shrink: 0;
+  margin-top: 0.75rem;
+   position: absolute;
+  right: 0;
+  bottom: 0;
+  justify-self: end;
+  text-decoration: underline;
+  color: #f8f1f1;
+  padding-right: 1rem;
+}
+
+.related-works-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+form {
+  justify-self: center;
+}
+
+
+@media (max-width: 820px) {
+  .showcase-section {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  header h1 {
+    font-size: clamp(2.5rem, 16vw, 6rem);
+    line-height: 0.9;
+  }
+
+  .featured-info {
+    display: flex;
+    flex-direction: column;
+}
+
+
+  #featured-artist {
+    max-width: 100%;
+  }
+
+}

@@ -1,0 +1,66 @@
+.y2k-device {
+  width: 260px;
+  padding: 20px;
+  border-radius: 30px;
+
+  /* TRANSLUCENT GAMEBOY SHELL */
+  background: rgba(120, 200, 255, 0.35);
+  backdrop-filter: blur(6px) saturate(180%);
+  border: 3px solid rgba(255, 255, 255, 0.4);
+
+  /* CHROME EDGE */
+  box-shadow:
+    inset 0 0 20px rgba(255, 255, 255, 0.6),
+    inset 0 0 40px rgba(255, 255, 255, 0.3),
+    0 10px 25px rgba(0, 0, 0, 0.4);
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: "Verdana", sans-serif;
+}
+
+/* GAMEBOY LCD SCREEN */
+.device-screen {
+  background: #0a0a0a;
+  color: #7affc9;
+  padding: 15px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 14px;
+
+  box-shadow:
+    inset 0 0 10px #7affc9,
+    inset 0 0 25px rgba(0, 255, 200, 0.4),
+    0 0 10px rgba(0, 255, 200, 0.4);
+}
+
+/* TAMAGOTCHI BUBBLE BUTTONS */
+.device-controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.device-controls button {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  border: none;
+  font-size: 20px;
+
+  /* BUBBLE PLASTIC */
+  background: radial-gradient(circle at 30% 30%, #ffffff, #d0d0d0);
+  box-shadow:
+    4px 4px 10px rgba(0, 0, 0, 0.25),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.8),
+    inset 2px 2px 5px rgba(0, 0, 0, 0.15);
+
+  cursor: pointer;
+  transition: 0.1s;
+}
+
+.device-controls button:active {
+  box-shadow:
+    inset 4px 4px 10px rgba(0, 0, 0, 0.25),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.8);
+}
