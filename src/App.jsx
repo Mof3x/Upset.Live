@@ -1,9 +1,9 @@
-import GlowCanvas from "./glowcanvas";
-import Noise from "./component/Noise";
+import GlowCanvas from "./components/atmosphere/glowcanvas"; 
+import Noise from "./components/atmosphere/Noise";
 import CRTEffect from "vault66-crt-effect";
 import "vault66-crt-effect/dist/vault66-crt-effect.css";
-import DitherCanvas from "./dithercanvas";
-import Navbar from "./component/Navbar";
+import DitherCanvas from "./components/atmosphere/dithercanvas";
+import Navbar from "./components/layout/Navbar";
 import { BrowserRouter } from "react-router-dom";
 
 export default function App() {
