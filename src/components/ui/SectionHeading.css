@@ -1,0 +1,32 @@
+.section-heading {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.section-heading__eyebrow {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.section-heading__title {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 0.95;
+}
+
+.section-heading__subtitle {
+  margin: 0;
+  max-width: 42rem;
+  line-height: 1.45;
+  opacity: 0.82;
+}
+
+.section-heading__action {
+  margin-top: 0.3rem;
+}

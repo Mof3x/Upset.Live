@@ -1,0 +1,26 @@
+.artist-card {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.artist-card__body {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.artist-card__body h3 {
+  margin: 0;
+  text-align: left;
+
+}
+
+.artist-card h3,
+.work-card h3,
+.text-card h3 {
+  text-align: left;
+}
+
+.artist-card__body p {
+  margin: 0;
+  line-height: 1.45;
+}

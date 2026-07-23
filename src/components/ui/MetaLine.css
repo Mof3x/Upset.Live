@@ -1,0 +1,16 @@
+.meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.68;
+}
+
+.meta-line__item:not(:last-child)::after {
+  content: "•";
+  margin-left: 0.75rem;
+  opacity: 0.5;
+}

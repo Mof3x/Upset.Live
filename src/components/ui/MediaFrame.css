@@ -1,0 +1,33 @@
+.media-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--media-ratio, 4 / 5);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.media-frame--rounded {
+  border-radius: 18px;
+}
+
+.media-frame > img,
+.media-frame > video,
+.media-frame > canvas,
+.media-frame > picture,
+.media-frame > svg,
+.media-frame img,
+.media-frame canvas,
+.media-frame video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  -webkit-mask-image: var(--crt-edge-mask-vertical), var(--crt-edge-mask-horizontal);
+  mask-image: var(--crt-edge-mask-vertical), var(--crt-edge-mask-horizontal);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
