@@ -3,8 +3,8 @@ export const artists = {
     slug: "gor",
     name: "Gor",
     discipline: "Visual Artist",
-    location: "Sheffield, UK",
-    image: "/images/gor-portrait.jpg",
+    location: "London, UK",
+    image: "/public/gor.jpeg",
     imageAlt: "Portrait of Gor",
     bio: [
       "Gor is a multidisciplinary artist working across painting, image-making and visual research.",
@@ -18,7 +18,7 @@ export const artists = {
       {
         slug: "night-study",
         title: "Night Study",
-        image: "/images/night-study.jpg",
+        image: "/gor.jpeg",
         imageAlt: "Night Study artwork",
         artist: { name: "Gor", slug: "gor" },
         type: "Painting",
@@ -29,7 +29,7 @@ export const artists = {
       {
         slug: "untitled-figure",
         title: "Untitled Figure",
-        image: "/images/untitled-figure.jpg",
+        image: "/public/gor.jpeg",
         imageAlt: "Untitled Figure artwork",
         artist: { name: "Gor", slug: "gor" },
         type: "Visual Art",

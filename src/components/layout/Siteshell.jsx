@@ -7,6 +7,15 @@ import "../../index.css";
 export default function SiteShell({ children }) {
   return (
     <div className="site-shell">
+      <div className="noise-layer">
+      <Noise
+        patternSize={900}
+        patternScaleX={2}
+        patternScaleY={1}
+        patternRefreshInterval={2}
+        patternAlpha={400}
+        />
+      </div>
       <div className="crt-wrap">
         <CRTEffect
           enabled

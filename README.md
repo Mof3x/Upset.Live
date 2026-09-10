@@ -1,93 +1,248 @@
-README: Project Structure & Component Overview
+# UpsetXociety
 
-📁 File Structure
+UpsetXociety is a React-based art-house archive interface. It presents artists,
+visual work, editorial material, and archive-style navigation through a CRT-inspired
+visual language. The current implementation is a frontend prototype: content is
+stored in local JavaScript objects and there is no backend, CMS, authentication, or
+newsletter service connected yet.
 
- • index.html: Main HTML entry point for the application.
- • public/: Contains static assets like favicon.svg.
- • src/: Core application code with React components and utilities.
+## Contents
 
-----------------------------------------------------------------------------------------------------------------------------
+- [Getting started](#getting-started)
+- [Available commands](#available-commands)
+- [Current routes](#current-routes)
+- [Application architecture](#application-architecture)
+- [Content model](#content-model)
+- [Visual systems](#visual-systems)
+- [Assets and media](#assets-and-media)
+- [Adding content](#adding-content)
+- [Project conventions](#project-conventions)
+- [Known limitations](#known-limitations)
 
-🧩 Key Components & Their Roles
+## Getting started
 
-1. App.jsx
+### Requirements
 
- • Purpose: Root component of the application.
- • Key Features:
-    • Integrates Noise, Galaxy, and Navbar components.
-    • Manages the overall layout and structure of the UI.
- • UI Relevance: Central to the application's UI hierarchy.
+- Node.js and npm compatible with the installed Vite version
+- A modern browser with Canvas support
 
-2. Navbar.jsx
+### Install and run
 
- • Purpose: Navigation bar with a toggle for mobile responsiveness.
- • Key Features:
-    • State management for open/close state.
-    • Toggle button with aria-expanded for accessibility.
- • UI Relevance: Core UI component for navigation.
+From the project root:
 
-3. Galaxy.jsx
+```bash
+npm install
+npm run dev
+```
 
- • Purpose: Renders a dynamic galaxy visual using WebGL.
- • Key Features:
-    • Uses Renderer and shader programs for visual effects.
-    • Supports mouse interaction for dynamic star movement.
- • UI Relevance: Visual component, not directly part of the UI interface.
+Vite prints the local development URL, normally `http://localhost:5173`.
 
-4. Noise.jsx
+To create and preview a production build:
 
- • Purpose: Generates a noise pattern for background effects.
- • Key Features:
-    • Uses canvas and randomization for dynamic noise.
-    • Resizes with the viewport.
- • UI Relevance: Visual background effect, not UI interface.
+```bash
+npm run build
+npm run preview
+```
 
-5. Particles.jsx
+## Available commands
 
- • Purpose: Renders animated particle effects.
- • Key Features:
-    • Uses WebGL for performance-intensive particle rendering.
-    • Supports hover interaction for dynamic particle movement.
- • UI Relevance: Visual effect, not UI interface.
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the Vite development server with hot reload. |
+| `npm run build` | Build the application for production in `dist/`. |
+| `npm run preview` | Serve the production build locally. |
+| `npm run lint` | Run ESLint across the project. |
 
-6. musicPlayerY2k.jsx
+There are currently no automated unit, integration, or end-to-end tests.
 
- • Purpose: Audio player component for playing tracks.
- • Key Features:
-    • Manages a playlist with play, pause, next, and prev controls.
-    • Uses useRef for audio element management.
- • UI Relevance: Core UI component for audio interaction.
+## Current routes
 
-7. Dithercanvas.jsx & Glowcanvas.jsx
+Only these routes are registered in `src/App.jsx`:
 
- • Purpose: Image processing components for visual effects.
- • Key Features:
-    • Renders images with dithering or glow effects.
-    • Uses canvas for pixel-level manipulation.
- • UI Relevance: Visual effects, not UI interface.
+| Route | Component | Behavior |
+| --- | --- | --- |
+| `/` | `HomePage` | Hero, quote, featured work, related works, and newsletter UI. |
+| `/artists/:slug` | `ArtistPage` | Artist profile resolved from the local `artists` object. |
 
-8. edgeDiffuse.js
+The artist profile currently available in mock data is `/artists/gor`.
+Unknown artist slugs render an `Artist not found` state.
 
- • Purpose: Applies edge diffusion overlay to images.
- • Key Features:
-    • Uses canvas manipulation for edge-blur effects.
- • UI Relevance: Visual effect, not UI interface.
+The navigation and cards also contain links for `/works`, `/texts`, `/updates`,
+`/about`, `/print`, `/vault`, `/works/:slug`, `/texts/:slug`, and
+`/journal/:slug`. These destinations are not registered yet, so they are
+extension points rather than completed pages.
 
-----------------------------------------------------------------------------------------------------------------------------
+## Application architecture
 
-📌 Summary of UI Components
+The startup path is:
 
- • UI-Centric Components:
-    • App.jsx (Root layout)
-    • Navbar.jsx (Navigation)
-    • musicPlayerY2k.jsx (Audio controls)
- • Visual/Effect Components (Not UI interface):
-    • Galaxy.jsx, Noise.jsx, Particles.jsx, Dithercanvas.jsx, Glowcanvas.jsx, edgeDiffuse.js
+1. `src/main.jsx` mounts React in `StrictMode` and imports global styles.
+2. `src/App.jsx` creates the `BrowserRouter`, declares routes, and wraps them in
+   `SiteShell`.
+3. `src/components/layout/SiteShell.jsx` adds the shared navbar, animated noise,
+   CRT effect, and page content container.
+4. Page components compose reusable cards and UI primitives with local mock data.
 
-----------------------------------------------------------------------------------------------------------------------------
+### Directory guide
 
-📝 Notes
+```text
+src/
+  App.jsx                 Router and application composition
+  main.jsx                React entry point
+  index.css               Global layout, typography, and theme styles
+  components/
+    atmosphere/           Canvas, WebGL, CRT, noise, and image treatments
+    cards/                Work, artist, and text presentation components
+    layout/               Navbar, shell, footer, and card grid components
+    ui/                   Media frames, metadata, tags, headings, and links
+  mock/                   Local homepage, artist, work, and text content
+  pages/                  Routed page components and page-specific CSS
+  assets/                 Source assets such as fonts
+public/                   Root-served static assets
+```
 
- • The application combines UI components (navigation, audio controls) with visual effects (galaxy, noise, particles).
- • All components are built with React and WebGL for dynamic, interactive visuals.
+The `components` folders are organized by responsibility. New routed screens
+belong in `src/pages`; reusable presentation belongs in `src/components`; and
+content should remain separate from rendering code in `src/mock` until a data
+service is introduced.
+
+## Content model
+
+### Homepage
+
+`src/mock/homepage.js` exports one `homepage` object containing:
+
+- `hero`: `title`, `subtitle`, `image`, `imageAlt`, `href`, and `ctaLabel`
+- `quote`: `text` and `attribution`
+- `featuredWork`: title, image, excerpt, destination, and an embedded artist summary
+- `relatedWorks`: cards with `id`, `title`, `type`, image data, and `href`
+- `newsletter`: title, body, placeholder, and button label
+
+`HomePage.jsx` destructures this object and passes each section into small local
+card components. To change homepage copy or imagery, edit the mock object rather
+than the JSX structure.
+
+### Artists
+
+`src/mock/artists.js` exports `artists`, an object keyed by URL slug. Each artist
+record contains:
+
+```js
+{
+  slug,
+  name,
+  discipline,
+  location,
+  image,
+  imageAlt,
+  bio: ["paragraph", "paragraph"],
+  tags: ["Tag"],
+  links: { instagram },
+  works: [/* work records */]
+}
+```
+
+`ArtistPage` uses `useParams()` to look up `artists[slug]`. A new artist becomes
+reachable automatically once its slug is added to this object, provided its image
+and work data are valid.
+
+### Works and texts
+
+`src/mock/works.js` and `src/mock/texts.js` define the intended archive records.
+Work records use `slug`, `title`, `image`, `imageAlt`, `artist`, `type`, `year`,
+`excerpt`, and `tags`. Text records use `slug`, `title`, `type`, `category`,
+`year`, `excerpt`, `author`, `tags`, and `relatedWorkSlugs`.
+
+These arrays are not currently consumed by a listing or detail route. They are the
+starting point for implementing the missing works and texts sections.
+
+## Visual systems
+
+- `Noise` continuously paints a canvas texture behind the application.
+- `vault66-crt-effect` supplies scanlines, sweep, glow, and edge glow through
+  `SiteShell`.
+- `GlowCanvas` applies image glow, grayscale treatment, scanlines, edge diffusion,
+  and selective color restoration.
+- `DitherCanvas` applies a green monochrome Bayer-style dither treatment with
+  scanlines and edge diffusion.
+- `Galaxy` and `Particles` provide OGL/WebGL atmosphere components, but they are
+  not mounted by the current application shell.
+- `edgeDiffuse.js` contains the shared canvas edge-diffusion helper.
+
+These effects are presentation layers. Keep content meaning and routing in page
+components rather than coupling them to canvas code.
+
+The `musicPlayerY2k` component contains playlist controls, but it is not mounted
+and currently expects audio files under `/music/` that are not present in `public/`.
+
+## Assets and media
+
+Files in `public/` are served from the site root. Reference them like this:
+
+```jsx
+<img src="/gor.jpeg" alt="Description" />
+```
+
+Do not include `/public` in the browser URL. Existing data contains both valid
+root-relative paths such as `/gor.jpeg` and stale paths such as `/public/gor.jpeg`.
+When adding or correcting content, use the root-relative form.
+
+Source assets that require bundling belong in `src/assets`. Public, directly
+addressable images, audio, and icons belong in `public/`. Every image should have
+meaningful `alt` text; decorative canvas effects should remain separate from the
+semantic content image.
+
+## Adding content
+
+### Add an artist
+
+1. Add a slug-keyed record to `src/mock/artists.js`.
+2. Place the image in `public/` and reference it as `/<filename>`.
+3. Add complete `imageAlt`, biography, tags, and external links.
+4. Add work records under the artist's `works` array.
+5. Visit `/artists/<slug>` and run the lint and build checks.
+
+### Add a new page
+
+1. Create a page component in `src/pages` with its page-specific stylesheet.
+2. Import the component in `src/App.jsx`.
+3. Add a `Route` entry inside the existing `Routes` block.
+4. Update navigation or card links only after the route exists.
+5. Keep data in `src/mock` and use existing primitives such as `WorkCard`,
+   `SectionHeading`, `MediaFrame`, `MetaLine`, and `TagList` where appropriate.
+
+### Connect the newsletter
+
+`HomePage.jsx` currently prevents the newsletter form's default submission and
+contains a placeholder comment for a future `newsletter_signups` endpoint. A real
+implementation should add loading, success, and error states, validate the API
+response, and avoid logging submitted email addresses.
+
+## Project conventions
+
+- Use React function components and hooks.
+- Use React Router `Link` for internal navigation and regular anchors for external
+  destinations.
+- Keep reusable UI behavior in `src/components` and page composition in `src/pages`.
+- Preserve accessible labels and `aria-expanded`/`aria-controls` behavior in the
+  responsive navbar.
+- Keep asset paths root-relative when the asset is in `public/`.
+- Run `npm run lint` and `npm run build` before considering a change complete.
+
+## Known limitations
+
+- The works, texts, updates, about, print, vault, and journal pages are not routed.
+- Several mock records use placeholder copy and repeated imagery.
+- `works.js` references `/images/night-study.jpg`, but that file is not currently
+  present in `public/`.
+- Some artist image paths still incorrectly include `/public`.
+- Newsletter submission has no persistence or backend request.
+- `Footer.jsx` is empty and is not part of the visible shell.
+- `ArtistCard.jsx` is an older unused implementation; homepage artist rendering is
+  currently local to `HomePage.jsx`.
+- The font files under `src/assets/fonts` are not explicitly registered with
+  `@font-face`.
+- Canvas effects can be expensive on low-powered devices, especially the animated
+  noise layer.
+- No automated test suite is configured.
 
