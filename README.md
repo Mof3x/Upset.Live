@@ -55,22 +55,54 @@ npm run preview
 
 There are currently no automated unit, integration, or end-to-end tests.
 
+## Directus environment
+
+The browser only needs the public Directus API origin:
+
+```bash
+copy .env.example .env.local
+```
+
+Set `VITE_DIRECTUS_URL` in `.env.local` to the public CMS URL. Files ending in
+`.local` are ignored by Git. Never put Directus admin tokens, database
+connection strings, Supabase service keys, or payment secrets in a `VITE_`
+variable because Vite exposes those values to the browser bundle.
+
+The GitHub Pages workflow in `.github/workflows/deploy-pages.yml` reads the same
+value from the repository variable `VITE_DIRECTUS_URL`. Configure it under
+**Repository Settings -> Secrets and variables -> Actions -> Variables**, then
+enable GitHub Pages with **GitHub Actions** as the source. The workflow fails
+before building if the public URL variable is missing.
+
 ## Current routes
 
-Only these routes are registered in `src/App.jsx`:
+The core routes registered in `src/App.jsx` are:
 
 | Route | Component | Behavior |
 | --- | --- | --- |
 | `/` | `HomePage` | Hero, quote, featured work, related works, and newsletter UI. |
+| `/about` | `AboutPage` | Collective introduction and archive context. |
+| `/artists` | `ArtistsPage` | Artist index from local mock data. |
 | `/artists/:slug` | `ArtistPage` | Artist profile resolved from the local `artists` object. |
+| `/works` | `WorksPage` | Works index from local mock data. |
+| `/works/:slug` | `WorkPage` | Work detail resolved by slug. |
+| `/texts` | `TextsPage` | Text index from local mock data. |
+| `/texts/:slug` | `TextPage` | Text detail resolved by slug. |
+| `/journal` | `JournalPage` | Journal index with starter local content. |
+| `/journal/:slug` | `JournalPostPage` | Journal detail resolved by slug. |
+| `/vault` | `VaultPage` | Vault introduction and future archive entry point. |
+| `/contact` | `ContactPage` | Contact form with local success state. |
+| `*` | `NotFoundPage` | Intentional recovery page for unknown URLs. |
 
 The artist profile currently available in mock data is `/artists/gor`.
-Unknown artist slugs render an `Artist not found` state.
+Unknown artist slugs render an `Artist not found` state. Unknown routes render
+the shared `NotFoundPage` with links back to Home and Works.
 
-The navigation and cards also contain links for `/works`, `/texts`, `/updates`,
-`/about`, `/print`, `/vault`, `/works/:slug`, `/texts/:slug`, and
-`/journal/:slug`. These destinations are not registered yet, so they are
-extension points rather than completed pages.
+The Shop routes remain the next commerce milestone: `/shop` and
+`/shop/prints` are documented navigation targets but are not registered yet.
+
+`/shop` is the canonical public commerce route. Print editions are a Shop
+category at `/shop/prints`, alongside publications, posters, apparel, and music.
 
 ## Application architecture
 
@@ -82,6 +114,11 @@ The startup path is:
 3. `src/components/layout/SiteShell.jsx` adds the shared navbar, animated noise,
    CRT effect, and page content container.
 4. Page components compose reusable cards and UI primitives with local mock data.
+
+The Directus integration boundary lives in `src/lib/`. Copy `.env.example` to
+`.env.local` and set `VITE_DIRECTUS_URL` when the public Directus API is ready.
+The query helpers are intentionally separate from the pages so mock data can be
+replaced with CMS data one collection at a time.
 
 ### Directory guide
 
@@ -96,6 +133,7 @@ src/
     layout/               Navbar, shell, footer, and card grid components
     ui/                   Media frames, metadata, tags, headings, and links
   mock/                   Local homepage, artist, work, and text content
+  lib/                    Directus client, queries, media URLs, and normalizers
   pages/                  Routed page components and page-specific CSS
   assets/                 Source assets such as fonts
 public/                   Root-served static assets

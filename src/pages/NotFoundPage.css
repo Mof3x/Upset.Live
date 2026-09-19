@@ -1,0 +1,38 @@
+.not-found-page {
+  min-height: 65svh;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 1rem;
+  padding-top: 4rem;
+  padding-bottom: 6rem;
+}
+
+.not-found-page h1 {
+  max-width: 12ch;
+  margin: 0;
+  font-size: clamp(3rem, 9vw, 7rem);
+  line-height: 0.9;
+  text-align: left;
+}
+
+.not-found-page__message {
+  max-width: 34rem;
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.5;
+}
+
+.not-found-page__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 560px) {
+  .not-found-page__links {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

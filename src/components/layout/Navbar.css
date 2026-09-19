@@ -17,7 +17,8 @@
   padding: 0.5rem 0.75rem;
   font: inherit;
   cursor: pointer;
-  margin-right: 2rem;
+  min-height: 2.75rem;
+  margin-right: 0;
 }
 
 .nav-panel {
@@ -85,7 +86,7 @@ ul.nav-section.right {
   .nav-section {
     flex-direction: row;
     align-items: center;
-    gap: 2rem;
+    gap: clamp(0.75rem, 2vw, 2rem);
   }
 
   .nav-section.left {
@@ -101,6 +102,30 @@ ul.nav-section.right {
   .nav-section.right {
     grid-column: 3;
     justify-self: end;
-    padding-right: 4rem;
+    padding-right: 0;
+  }
+}
+
+@media (min-width: 821px) and (max-width: 1050px) {
+  .nav-panel {
+    gap: 0.75rem;
+  }
+
+  .nav-section a,
+  .logo {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 820px) {
+  .nav-panel.open {
+    padding: 0.5rem 0 1rem;
+  }
+
+  .nav-section a,
+  .logo {
+    display: block;
+    min-height: 2.75rem;
+    padding: 0.65rem 0;
   }
 }

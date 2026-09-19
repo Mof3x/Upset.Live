@@ -13,6 +13,7 @@ export const texts = [
     },
     tags: ["Archive", "Memory", "African Gothic"],
     relatedWorkSlugs: ["night-study"],
+    relatedJournalSlug: "first-notes-from-the-archive",
   },
   {
     slug: "the-city-remembers-in-fragments",

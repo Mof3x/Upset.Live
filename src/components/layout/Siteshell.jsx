@@ -2,6 +2,7 @@ import Noise from "../atmosphere/Noise";
 import CRTEffect from "vault66-crt-effect";
 import "vault66-crt-effect/dist/vault66-crt-effect.css";
 import Navbar from "./Navbar";
+import Footer from "./Footer";
 import "../../index.css";
 
 export default function SiteShell({ children }) {
@@ -36,6 +37,7 @@ export default function SiteShell({ children }) {
         >
           <Navbar />
           <main className="site-content">{children}</main>
+          <Footer />
         </CRTEffect>
       </div>
     </div>

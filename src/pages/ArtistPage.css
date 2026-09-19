@@ -38,6 +38,8 @@
 .artist-page__bio p {
   margin: 0;
   line-height: 1.5;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .artist-page__works {
@@ -55,5 +57,17 @@
 
   .artist-page__identity h1 {
     font-size: clamp(3rem, 16vw, 6rem);
+  }
+}
+
+@media (max-width: 560px) {
+  .artist-page {
+    padding-top: 2.5rem;
+    padding-bottom: 4rem;
+  }
+
+  .artist-page__intro {
+    gap: 2rem;
+    margin-bottom: 4rem;
   }
 }

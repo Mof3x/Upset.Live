@@ -1,0 +1,25 @@
+- Visual arts 
+	- Paintings
+	- 3d modelling
+	- commissions
+- Music
+	- Albums/Singles
+	- Production
+	- Performances + Bookings/commissions
+- Writing
+	- Prose
+	- Journalism + Advocacy
+	- Essays and manifestos
+- Who we are
+	- intro
+		- bio
+	- Artists
+		- Gor
+		- Kanyin
+		- Mofe
+		- Q
+		- Mbana
+		- Rae
+		- Demi
+	- Ethos 
+		- African Gothic

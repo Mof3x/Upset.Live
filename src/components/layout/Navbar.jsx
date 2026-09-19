@@ -21,7 +21,7 @@ export default function Navbar() {
         <ul className="nav-section left">
           <li><Link to="/works">Works</Link></li>
           <li><Link to="/texts">Texts</Link></li>
-          <li><Link to="/updates">Updates</Link></li>
+          <li><Link to="/journal">Journal</Link></li>
         </ul>
 
       <Link to="/" className="logo">
@@ -30,7 +30,7 @@ export default function Navbar() {
 
         <ul className="nav-section right">
           <li><Link to="/about">About</Link></li>
-          <li><Link to="/print">Print</Link></li>
+          <li><Link to="/shop">Shop</Link></li>
           <li><Link to="/vault">Vault</Link></li>
         </ul>
       </div>

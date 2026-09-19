@@ -6,6 +6,7 @@ import TagList from "../components/ui/TagList";
 import CardGrid from "../components/layout/CardGrid";
 import WorkCard from "../components/cards/WorkCard";
 import TextLink from "../components/ui/TextLink";
+import ContentState from "../components/ui/ContentState";
 import "./ArtistPage.css";
 import { artists } from "../mock/artists";
 
@@ -16,10 +17,11 @@ export default function ArtistPage() {
   if (!artist) {
     return (
       <main className="artist-page page-content">
-        <h1>Artist not found</h1>
-        <TextLink to="/artists" arrow>
-          Return to artists
-        </TextLink>
+        <ContentState
+          status="notFound"
+          actionTo="/artists"
+          actionLabel="Return to artists"
+        />
       </main>
     );
   }
@@ -61,11 +63,15 @@ export default function ArtistPage() {
           linkLabel="View all works"
         />
 
-        <CardGrid min="220px">
-          {artist.works.map((work) => (
-            <WorkCard key={work.slug} {...work} />
-          ))}
-        </CardGrid>
+        {artist.works.length ? (
+          <CardGrid min="220px">
+            {artist.works.map((work) => (
+              <WorkCard key={work.slug} {...work} />
+            ))}
+          </CardGrid>
+        ) : (
+          <ContentState status="empty" />
+        )}
       </section>
     </main>
   );

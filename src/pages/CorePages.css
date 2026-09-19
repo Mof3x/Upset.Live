@@ -1,0 +1,253 @@
+.core-page,
+.core-detail {
+  padding-top: clamp(3rem, 8vw, 7rem);
+  padding-bottom: clamp(4rem, 10vw, 8rem);
+}
+
+.core-page__intro,
+.core-detail__header {
+  max-width: 60rem;
+  margin-bottom: clamp(3rem, 8vw, 6rem);
+}
+
+.core-page__intro h1,
+.core-detail__header h1 {
+  max-width: 12ch;
+  margin: 0.25rem 0 1.25rem;
+  font-size: clamp(3.5rem, 10vw, 8rem);
+  line-height: 0.88;
+  text-align: left;
+}
+
+.core-page__intro > p:last-child {
+  max-width: 38rem;
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.45;
+}
+
+.core-page__prose,
+.core-detail__article {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 44rem;
+  font-size: 1.2rem;
+  line-height: 1.55;
+}
+
+.core-page__prose p,
+.core-detail__article p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.core-page__list {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 60rem;
+}
+
+.category-nav {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.category-nav__label {
+  margin: 0;
+  color: rgba(223, 255, 235, 0.65);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.category-nav__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.category-nav__option {
+  border: 1px solid rgba(223, 255, 235, 0.45);
+  border-radius: 0;
+  padding: 0.55rem 0.8rem;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
+.category-nav__option:hover,
+.category-nav__option:focus-visible,
+.category-nav__option[aria-pressed="true"] {
+  border-color: #dfffeb;
+  color: #000;
+  background: #dfffeb;
+}
+
+.category-nav__option:focus-visible {
+  outline: 2px solid #dfffeb;
+  outline-offset: 3px;
+}
+
+.category-nav__empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  opacity: 0.7;
+}
+
+.core-detail__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.85fr);
+  align-items: start;
+  gap: clamp(2rem, 6vw, 6rem);
+}
+
+.core-detail__body {
+  display: grid;
+  align-content: start;
+  gap: 1.25rem;
+  font-size: 1.15rem;
+  line-height: 1.5;
+}
+
+.core-detail__body p {
+  margin: 0;
+}
+
+.core-detail__placeholder {
+  opacity: 0.7;
+}
+
+.related-content {
+  display: grid;
+  gap: 1rem;
+  margin-top: clamp(4rem, 10vw, 8rem);
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(223, 255, 235, 0.35);
+}
+
+.related-content h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  text-align: left;
+}
+
+.related-content__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+}
+
+.journal-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid rgba(223, 255, 235, 0.35);
+}
+
+.journal-card h2 {
+  margin: 0;
+  text-align: left;
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 0.95;
+}
+
+.journal-card p {
+  max-width: 40rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.contact-form {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 42rem;
+}
+
+.contact-form label {
+  display: grid;
+  gap: 0.5rem;
+  font-size: 1rem;
+}
+
+.contact-form input,
+.contact-form textarea {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid rgba(223, 255, 235, 0.5);
+  border-radius: 0;
+  padding: 0.8rem;
+  color: aliceblue;
+  background: rgba(0, 0, 0, 0.4);
+  font: inherit;
+}
+
+.contact-form textarea {
+  resize: vertical;
+}
+
+.contact-form button {
+  width: fit-content;
+  border: 1px solid rgba(223, 255, 235, 0.7);
+  border-radius: 0;
+  padding: 0.8rem 1.2rem;
+  color: black;
+  background: #dfffeb;
+  cursor: pointer;
+  font: inherit;
+}
+
+.contact-form button:focus-visible,
+.contact-form input:focus-visible,
+.contact-form textarea:focus-visible {
+  outline: 2px solid #dfffeb;
+  outline-offset: 3px;
+}
+
+.core-detail__article,
+.core-page__prose {
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+@media (max-width: 760px) {
+  .core-page,
+  .core-detail {
+    padding-top: 2.5rem;
+    padding-bottom: 4rem;
+  }
+
+  .core-page__intro,
+  .core-detail__header {
+    margin-bottom: 3rem;
+  }
+
+  .core-page__intro h1,
+  .core-detail__header h1 {
+    font-size: clamp(3rem, 15vw, 5rem);
+  }
+
+  .core-detail__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .category-nav__options,
+  .related-content__links {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .category-nav__option,
+  .contact-form button {
+    width: 100%;
+  }
+
+  .core-page__intro > p:last-child,
+  .core-page__prose,
+  .core-detail__article {
+    font-size: 1.05rem;
+  }
+}

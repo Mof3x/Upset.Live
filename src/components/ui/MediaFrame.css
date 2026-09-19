@@ -1,6 +1,7 @@
 .media-frame {
   position: relative;
   width: 100%;
+  min-width: 0;
   aspect-ratio: var(--media-ratio, 4 / 5);
   overflow: hidden;
   isolation: isolate;
@@ -30,4 +31,10 @@
   mask-size: 100% 100%;
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
+}
+
+@media (max-width: 560px) {
+  .media-frame--rounded {
+    border-radius: 12px;
+  }
 }
