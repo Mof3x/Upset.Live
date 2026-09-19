@@ -256,7 +256,7 @@ services:
       NODE_EXTRA_CA_CERTS: "/directus/certs/supabase-pooler-chain.pem"
       DB_CLIENT: "pg"
       DB_CONNECTION_STRING: "postgresql://postgres.tfnpfgekwoqflwodvdmp:Owamb3inthesky!@aws-1-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require"
-      SECRET: "sb_secret_ephtJDbFPDs23e-HOKq8Ug_SmvXjhMl"
+     
       KEY: "sb_publishable_pSg9x4iQLl0Ac2MdZdAUvw_y4o-3hKx"
       STORAGE_LOCATIONS: "supabase"
       STORAGE_SUPABASE_DRIVER: "s3"
@@ -276,7 +276,7 @@ heroku config:set `
   DB_CLIENT="pg" `
   DB_CONNECTION_STRING="postgresql://postgres.tfnpfgekwoqflwodvdmp:Owamb3inthesky!@aws-1-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require" `
   KEY="b_publishable_pSg9x4iQLl0Ac2MdZdAUvw_y4o-3hKx" `
-  SECRET="sb_secret_ephtJDbFPDs23e-HOKq8Ug_SmvXjhMl" `
+  
   STORAGE_LOCATIONS="supabase" `
   STORAGE_SUPABASE_DRIVER="s3" `
   STORAGE_SUPABASE_BUCKET="Images" `
@@ -289,7 +289,6 @@ heroku config:set `
 New-Item -ItemType Directory -Force certs
 scp root@178.128.165.157:/var/www/directus/certs/supabase-pooler-chain.pem .\certs\supabase-pooler-chain.pem
 
-resend api re_7y1Db7E7_PyQAZqYMzRy862LZcULwYsr8
 
 $APP = "upset-directus-cms"
 
@@ -352,7 +351,7 @@ user:postgres
     
 - Keep your API keys handy
     sb_publishable_pSg9x4iQLl0Ac2MdZdAUvw_y4o-3hKx
-	sb_secret_ephtJDbFPDs23e-HOKq8Ug_SmvXjhMl
+	
 
 ### 03
 

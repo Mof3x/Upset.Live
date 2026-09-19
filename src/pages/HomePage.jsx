@@ -80,7 +80,10 @@
 import { Link } from "react-router-dom";
 import GlowCanvas from "../components/atmosphere/glowcanvas";
 import DitherCanvas from "../components/atmosphere/dithercanvas";
-import { homepage } from "../mock/homepage";
+import ContentState from "../components/ui/ContentState";
+import { getPublishedArtists, getPublishedWorks } from "../lib/queries";
+import { normalizeArtist, normalizeWork } from "../lib/normalise";
+import useDirectusResource from "../lib/useDirectusResource";
 import "./HomePage.css";
 
 function HeroCard({ hero }) {
@@ -227,7 +230,65 @@ function NewsletterCard({ newsletter }) {
 }
 
 export default function HomePage() {
-  const { hero, quote, featuredWork, relatedWorks, newsletter } = homepage;
+  const { data: works, status: worksStatus } = useDirectusResource(
+    getPublishedWorks,
+    [],
+    normalizeWork
+  );
+  const { data: artists, status: artistsStatus } = useDirectusResource(
+    getPublishedArtists,
+    [],
+    normalizeArtist
+  );
+
+  if (worksStatus === "loading" || artistsStatus === "loading") {
+    return <main className="homepage page-content"><ContentState status="loading" /></main>;
+  }
+
+  if (worksStatus === "error" || artistsStatus === "error") {
+    return <main className="homepage page-content"><ContentState status="error" /></main>;
+  }
+
+  if (!works.length) {
+    return <main className="homepage page-content"><ContentState status="empty" /></main>;
+  }
+
+  const featuredRecord = works.find((work) => work.featured) || works[0];
+  const featuredArtist = artists.find(
+    (artist) => artist.slug === featuredRecord.artist?.slug
+  );
+  const featuredWork = {
+    ...featuredRecord,
+    eyebrow: "Featured work",
+    href: `/works/${featuredRecord.slug}`,
+    ctaLabel: "View the work",
+    artist: featuredArtist || featuredRecord.artist,
+  };
+  const hero = {
+    title: "UpsetXociety",
+    subtitle: "Art House",
+    image: featuredRecord.image,
+    imageAlt: featuredRecord.imageAlt,
+    href: `/works/${featuredRecord.slug}`,
+    ctaLabel: "Enter the archive",
+  };
+  const relatedWorks = works
+    .filter((work) => work.slug !== featuredRecord.slug)
+    .slice(0, 4)
+    .map((work) => ({
+      ...work,
+      href: `/works/${work.slug}`,
+    }));
+  const quote = {
+    text: "Blackness is lit, don't let anybody tell you it's not.",
+    attribution: "Sylvia Wynter",
+  };
+  const newsletter = {
+    title: "Stay connected",
+    body: "News, works, releases and archive updates--occasionally.",
+    placeholder: "Enter your email",
+    buttonLabel: "Subscribe",
+  };
 
   return (
     <main className="homepage page-content">

@@ -9,9 +9,15 @@ import MetaLine from "../components/ui/MetaLine";
 import TagList from "../components/ui/TagList";
 import TextLink from "../components/ui/TextLink";
 import ContentState from "../components/ui/ContentState";
-import { artists } from "../mock/artists";
-import { works } from "../mock/works";
-import { texts } from "../mock/texts";
+import {
+  getPublishedArtists,
+  getPublishedTextBySlug,
+  getPublishedTexts,
+  getPublishedWorkBySlug,
+  getPublishedWorks,
+} from "../lib/queries";
+import { normalizeArtist, normalizeText, normalizeWork } from "../lib/normalise";
+import useDirectusResource from "../lib/useDirectusResource";
 import "./CorePages.css";
 
 const journalEntries = [
@@ -26,12 +32,6 @@ const journalEntries = [
     relatedWorkSlug: "night-study",
   },
 ];
-
-const allWorks = Object.values(artists).flatMap((artist) => artist.works);
-const workRecords = [...works, ...allWorks].filter(
-  (work, index, records) =>
-    records.findIndex((record) => record.slug === work.slug) === index
-);
 
 function PageIntro({ eyebrow, title, description }) {
   return (
@@ -97,7 +97,14 @@ export function AboutPage() {
 }
 
 export function ArtistsPage() {
-  const artistRecords = Object.values(artists);
+  const { data: artistRecords, status } = useDirectusResource(
+    getPublishedArtists,
+    [],
+    normalizeArtist
+  );
+  if (status === "loading" || status === "error") {
+    return <main className="core-page page-content"><ContentState status={status} /></main>;
+  }
 
   return (
     <main className="core-page page-content">
@@ -121,6 +128,14 @@ export function ArtistsPage() {
 
 export function WorksPage() {
   const [activeCategory, setActiveCategory] = useState("All");
+  const { data: workRecords, status } = useDirectusResource(
+    getPublishedWorks,
+    [],
+    normalizeWork
+  );
+  if (status === "loading" || status === "error") {
+    return <main className="core-page page-content"><ContentState status={status} /></main>;
+  }
   const categories = [
     "All",
     ...new Set(workRecords.map((work) => work.type).filter(Boolean)),
@@ -156,9 +171,25 @@ export function WorksPage() {
 
 export function WorkPage() {
   const { slug } = useParams();
-  const work = workRecords.find((record) => record.slug === slug);
+  const { data: work, status: workStatus } = useDirectusResource(
+    ({ signal }) => getPublishedWorkBySlug(slug, { signal }),
+    null,
+    normalizeWork,
+    slug
+  );
+  const { data: textRecords, status: textStatus } = useDirectusResource(
+    getPublishedTexts,
+    [],
+    normalizeText
+  );
+  if (workStatus === "loading" || textStatus === "loading") {
+    return <main className="core-page page-content"><ContentState status="loading" /></main>;
+  }
+  if (workStatus === "error" || textStatus === "error") {
+    return <main className="core-page page-content"><ContentState status="error" /></main>;
+  }
   const relatedTexts = work?.relatedTextSlugs
-    ?.map((textSlug) => texts.find((text) => text.slug === textSlug))
+    ?.map((textSlug) => textRecords.find((text) => text.slug === textSlug))
     .filter(Boolean);
   const relatedJournal = work?.relatedJournalSlug
     ? journalEntries.find((entry) => entry.slug === work.relatedJournalSlug)
@@ -215,14 +246,22 @@ export function WorkPage() {
 
 export function TextsPage() {
   const [activeCategory, setActiveCategory] = useState("All");
+  const { data: textRecords, status } = useDirectusResource(
+    getPublishedTexts,
+    [],
+    normalizeText
+  );
+  if (status === "loading" || status === "error") {
+    return <main className="core-page page-content"><ContentState status={status} /></main>;
+  }
   const categories = [
     "All",
-    ...new Set(texts.map((text) => text.category).filter(Boolean)),
+    ...new Set(textRecords.map((text) => text.category).filter(Boolean)),
   ];
   const filteredTexts =
     activeCategory === "All"
-      ? texts
-      : texts.filter((text) => text.category === activeCategory);
+      ? textRecords
+      : textRecords.filter((text) => text.category === activeCategory);
 
   return (
     <main className="core-page page-content">
@@ -250,7 +289,23 @@ export function TextsPage() {
 
 export function TextPage() {
   const { slug } = useParams();
-  const text = texts.find((record) => record.slug === slug);
+  const { data: text, status: textStatus } = useDirectusResource(
+    ({ signal }) => getPublishedTextBySlug(slug, { signal }),
+    null,
+    normalizeText,
+    slug
+  );
+  const { data: workRecords, status: workStatus } = useDirectusResource(
+    getPublishedWorks,
+    [],
+    normalizeWork
+  );
+  if (textStatus === "loading" || workStatus === "loading") {
+    return <main className="core-page page-content"><ContentState status="loading" /></main>;
+  }
+  if (textStatus === "error" || workStatus === "error") {
+    return <main className="core-page page-content"><ContentState status="error" /></main>;
+  }
   const relatedWorks = text?.relatedWorkSlugs
     ?.map((workSlug) => workRecords.find((work) => work.slug === workSlug))
     .filter(Boolean);
@@ -360,8 +415,24 @@ export function JournalPage() {
 export function JournalPostPage() {
   const { slug } = useParams();
   const entry = journalEntries.find((record) => record.slug === slug);
+  const { data: textRecords, status: textStatus } = useDirectusResource(
+    getPublishedTexts,
+    [],
+    normalizeText
+  );
+  const { data: workRecords, status: workStatus } = useDirectusResource(
+    getPublishedWorks,
+    [],
+    normalizeWork
+  );
+  if (textStatus === "loading" || workStatus === "loading") {
+    return <main className="core-page page-content"><ContentState status="loading" /></main>;
+  }
+  if (textStatus === "error" || workStatus === "error") {
+    return <main className="core-page page-content"><ContentState status="error" /></main>;
+  }
   const relatedText = entry?.relatedTextSlug
-    ? texts.find((text) => text.slug === entry.relatedTextSlug)
+    ? textRecords.find((text) => text.slug === entry.relatedTextSlug)
     : null;
   const relatedWork = entry?.relatedWorkSlug
     ? workRecords.find((work) => work.slug === entry.relatedWorkSlug)

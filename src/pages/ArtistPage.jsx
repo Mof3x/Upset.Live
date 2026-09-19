@@ -8,11 +8,26 @@ import WorkCard from "../components/cards/WorkCard";
 import TextLink from "../components/ui/TextLink";
 import ContentState from "../components/ui/ContentState";
 import "./ArtistPage.css";
-import { artists } from "../mock/artists";
+import { getPublishedArtistBySlug } from "../lib/queries";
+import { normalizeArtist } from "../lib/normalise";
+import useDirectusResource from "../lib/useDirectusResource";
 
 export default function ArtistPage() {
   const { slug } = useParams();
-  const artist = artists[slug];
+  const { data: artist, status } = useDirectusResource(
+    ({ signal }) => getPublishedArtistBySlug(slug, { signal }),
+    null,
+    normalizeArtist,
+    slug
+  );
+
+  if (status === "loading") {
+    return <ContentState status="loading" />;
+  }
+
+  if (status === "error") {
+    return <ContentState status="error" />;
+  }
 
   if (!artist) {
     return (
