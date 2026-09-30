@@ -17,7 +17,14 @@ export default function Navbar() {
         Menu
       </button>
 
-      <div id="site-nav" className={`nav-panel ${open ? "open" : ""}`}>
+      {/* Close the mobile menu after any link inside it is followed. */}
+      <div
+        id="site-nav"
+        className={`nav-panel ${open ? "open" : ""}`}
+        onClick={(event) => {
+          if (event.target.closest("a")) setOpen(false);
+        }}
+      >
         <ul className="nav-section left">
           <li><Link to="/works">Works</Link></li>
           <li><Link to="/texts">Texts</Link></li>

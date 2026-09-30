@@ -1,12 +1,17 @@
 import { Link } from "react-router-dom";
+import { getSiteSettings } from "../../lib/queries";
+import { normalizeSiteSettings } from "../../lib/normalise";
+import useDirectusResource from "../../lib/useDirectusResource";
 import "./Footer.css";
 
-const socialLinks = [
-  { label: "Instagram", href: "https://www.instagram.com/upsetxociety/" },
-  { label: "Bandcamp", href: "https://upsetxociety.bandcamp.com/" },
-  { label: "YouTube", href: "https://www.youtube.com/@upsetxociety" },
-  { label: "Email", href: "mailto:hello@upset.live" },
-];
+// Used until the matching site_settings fields are filled in Directus.
+const fallbackSocials = {
+  instagram: "https://www.instagram.com/upsetxociety/",
+  bandcamp: "https://upsetxociety.bandcamp.com/",
+  youtube: "https://www.youtube.com/@upsetxociety",
+  email: "hello@upset.live",
+};
+const fallbackStatement = "An independent house for image, sound and thought.";
 
 function ExternalLink({ href, children }) {
   return (
@@ -17,6 +22,19 @@ function ExternalLink({ href, children }) {
 }
 
 export default function Footer() {
+  const { data: settings } = useDirectusResource(getSiteSettings, null, normalizeSiteSettings, "site-settings");
+  const socials = { ...fallbackSocials };
+  Object.entries(settings?.socials || {}).forEach(([key, value]) => {
+    if (value) socials[key] = value;
+  });
+  const email = socials.email.replace(/^mailto:/, "");
+
+  const socialLinks = [
+    { label: "Instagram", href: socials.instagram },
+    { label: "Bandcamp", href: socials.bandcamp },
+    { label: "YouTube", href: socials.youtube },
+  ];
+
   return (
     <footer className="site-footer">
       <div className="site-footer__grid">
@@ -26,7 +44,7 @@ export default function Footer() {
             <li><Link to="/works">Works</Link></li>
             <li><Link to="/texts">Texts</Link></li>
             <li><Link to="/journal">Journal</Link></li>
-            <li><Link to="/artists">Artists</Link></li>
+            <li><Link to="/razz">Razz Magazine</Link></li>
             <li><Link to="/about">About</Link></li>
             <li><Link to="/contact">Contact</Link></li>
           </ul>
@@ -40,15 +58,16 @@ export default function Footer() {
                 <ExternalLink href={link.href}>{link.label}</ExternalLink>
               </li>
             ))}
+            <li><a href={`mailto:${email}`}>Email</a></li>
           </ul>
         </section>
 
         <section>
           <p className="site-footer__label">Support</p>
           <ul>
-            <li><Link to="/contact">Bookings and commissions</Link></li>
-            <li><Link to="/vault">Vault enquiries</Link></li>
-            <li><Link to="/contact">Newsletter</Link></li>
+            <li><Link to="/newsletter">Newsletter</Link></li>
+            <li><Link to="/commissions">Bookings and commissions</Link></li>
+            <li><Link to="/shop/prints">Print editions</Link></li>
           </ul>
         </section>
       </div>
@@ -57,7 +76,7 @@ export default function Footer() {
         <Link className="site-footer__logo" to="/">
           UpsetXociety
         </Link>
-        <p>An independent house for image, sound and thought.</p>
+        <p>{settings?.footerStatement || fallbackStatement}</p>
       </div>
     </footer>
   );

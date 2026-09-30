@@ -18,6 +18,10 @@ const stateCopy = {
     title: "Record not found",
     message: "This record may have moved or is not published yet.",
   },
+  closed: {
+    title: "This room is not open yet",
+    message: "It opens once its first records are published to the archive.",
+  },
 };
 
 export default function ContentState({
@@ -36,7 +40,7 @@ export default function ContentState({
       role={isError ? "alert" : "status"}
       aria-live="polite"
     >
-      <p className="content-state__status">{status}</p>
+      <p className="content-state__status">{status === "notFound" ? "not found" : status}</p>
       <h2>{title || copy.title}</h2>
       <p>{message || copy.message}</p>
       {actionTo && actionLabel && (

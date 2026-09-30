@@ -18,15 +18,17 @@ export default function WorkCard({
 }) {
   return (
     <article className="work-card">
-      <Link
-        to={`/works/${slug}`}
-        className="work-card__image-link"
-        aria-label={`View ${title}`}
-      >
-        <MediaFrame ratio="4 / 3">
-          <img src={image} alt={imageAlt || title} />
-        </MediaFrame>
-      </Link>
+      {image && (
+        <Link
+          to={`/works/${slug}`}
+          className="work-card__image-link"
+          aria-label={`View ${title}`}
+        >
+          <MediaFrame ratio="4 / 3">
+            <img src={image} alt={imageAlt || title} loading="lazy" />
+          </MediaFrame>
+        </Link>
+      )}
 
       <div className="work-card__body">
         <MetaLine items={[type, year]} />
@@ -35,7 +37,7 @@ export default function WorkCard({
           <Link to={`/works/${slug}`}>{title}</Link>
         </h3>
 
-        {artist && (
+        {artist?.slug && (
           <p className="work-card__artist">
             By{" "}
             <Link to={`/artists/${artist.slug}`}>

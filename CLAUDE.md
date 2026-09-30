@@ -5,43 +5,50 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev       # Vite dev server
+npm run dev       # Vite dev server (proxies /cms/* to Directus)
 npm run build     # production build -> dist/
 npm run preview   # serve the built dist/
 npm run lint      # eslint . (flat config; dist/ ignored)
 ```
 
-There is no test runner configured. JavaScript/JSX only, no TypeScript.
+There is no test runner configured. JavaScript/JSX only, no TypeScript. The build plan (`Upset.live/Functional site build plan.md`) expects `npm run lint` and `npm run build` to pass before a milestone is called done.
 
 ## Environment
 
-Copy `.env.example` to `.env.local` and set `VITE_DIRECTUS_URL` (public Directus origin, e.g. `https://cms.upset.live`). Vite exposes `VITE_*` vars to the browser, so never put admin tokens or service keys there. The frontend only reads public content, so Directus's Public role needs read permission on each collection it queries.
+Copy `.env.example` to `.env.local` and set `VITE_DIRECTUS_URL` (public Directus origin, `https://cms.upset.live`). Vite exposes `VITE_*` vars to the browser, so never put admin tokens or service keys there.
+
+- **Dev proxy.** In `npm run dev`, `src/lib/directus.js` sends requests to `/cms/*`, which `vite.config.js` proxies to `VITE_DIRECTUS_URL`. This exists because the live Directus sends no CORS headers. Set `VITE_DIRECTUS_DEV_PROXY=false` to call Directus directly. Production builds always call `VITE_DIRECTUS_URL` directly, so production needs Directus CORS (`CORS_ENABLED`/`CORS_ORIGIN` on the Heroku app) or a same-origin rewrite at the host.
+- **Forms.** `VITE_FORMS_ENDPOINT` (optional) is a server-side endpoint that forms POST JSON to (`<endpoint>/<kind>`). Without it, forms open a pre-filled email to `VITE_CONTACT_EMAIL` (default `hello@upset.live`). Forms must never write to Directus from the browser.
+
+## Directus changes
+
+The CMS (Directus 12.1.1 on Heroku, Supabase Postgres) is live and holds real configuration. Never write to it from here. Changes are prepared as scripts that the user runs. They are GET-only by default and print a manifest with a SHA-256, and writes only happen with `-Mode Execute -ManifestSha`. Do not add o2m alias fields through `PATCH /relations`: in 12.1.1 that call always drops and recreates the foreign key.
 
 ## Repository layout
 
 - `src/` is the Vite + React 19 + React Router 7 frontend (the app).
-- `Upset.live/` is an Obsidian-style notes vault: site plans, wireframes, Directus schema docs (`Backend/`), progress logs. It is not code. Treat it as design intent, since it can lag behind `src/`. For example, `Frontend/Frontend Architecture - react router migration.md` proposes the `@directus/sdk` and `mockContent.js`, but the app actually uses a hand-rolled fetch client and has no mock layer.
-- `Upset.live/Backend/directus/` holds Directus schema and permission notes (currently untracked in git).
+- `Upset.live/` is an Obsidian-style notes vault: site plans, wireframes, Directus schema docs (`Backend/`), progress logs. It is not code. Treat it as design intent, since it can lag behind `src/`. `Backend/db schema.md` is the most reliable reference for table and column names.
 
 ## Architecture
 
-**Shell and routing.** `src/App.jsx` wraps every route in `components/layout/Siteshell.jsx`. The shell renders a persistent `Noise` layer plus the `vault66-crt-effect` CRT overlay (scanlines, sweep, glow) around `Navbar`, the routed content and `Footer`. Atmosphere effects live once in the shell, not per page. Keep navigation on `<Link>`/`NavLink`, because full reloads restart the canvas effects. Note the file is `Siteshell.jsx` but is imported as `./SiteShell`, which only resolves on case-insensitive filesystems (Windows). Watch this on Linux CI or deploys.
+**Shell and routing.** `src/App.jsx` registers every route from the site plan and wraps them in `components/layout/SiteShell.jsx`. The shell renders a persistent `Noise` layer plus the `vault66-crt-effect` CRT overlay around `Navbar`, the routed content and `Footer`. Atmosphere effects live once in the shell. Keep navigation on `<Link>`, because full reloads restart the canvas effects. `/shop/:slug` is either a shop category (`/shop/prints`) or an item (see `SHOP_CATEGORY_SLUGS` in `pages/VaultPages.jsx`).
 
-**Content pipeline (Directus -> UI).** Data flows through four layers in `src/lib/`:
-1. `directus.js` is a small fetch wrapper over the Directus REST API (`/items/:collection`). It provides `getCollection`, `getItem`, `getItemBySlug`, `getSingleton` and a `DirectusRequestError`. It does not use the Directus SDK. Query params use Directus bracket syntax (`filter[slug][_eq]`).
-2. `queries.js` has one function per resource (`getPublishedWorks`, `getPublishedArtistBySlug`, ...). Each declares its `fields` list, the `is_published` filter and the sort. Add new fields here first.
-3. `normalise.js` maps raw Directus records (with nested M2M junctions like `work_artists.artist`, `text_authors.artist`, `work_files`) to flat UI shapes (`normalizeWork`, `normalizeArtist`, `normalizeText`, `normalizeJournalEntry`). Components consume only the normalised shape, never raw records. It tolerates several alias field names per property. Both `normalize*` and `normalise*` spellings are exported.
-4. `useDirectusResource(loader, initialData, normalize, resourceKey)` is the data hook. It returns `{ data, status: "loading" | "success" | "error", error }`, aborts on unmount, and normalises arrays item by item. Refetches are keyed on `resourceKey`, so pass the slug when the loader depends on a route param. Changing the `loader` alone does not refetch.
+**Content pipeline (Directus -> UI).** The data layer lives in `src/lib/`:
+1. `directus.js` is a small fetch wrapper over the Directus REST API (no SDK). Query params use bracket syntax (`filter[slug][_eq]`). When Directus refuses a requested *field* (403), a GET retries once with `fields=*` and no sort, which returns only Public-readable fields. Filters are kept, so unpublished records never leak. `isForbiddenError()` identifies 403s.
+2. `queries.js` has one function per resource. Every public query applies its publication rule: `is_published = true`, or for vault items `vault_classification = open_public` and `status != private`. **Relations are read from the junction collections** (`work_artists`, `work_files`, `text_authors`, `text_related_works`, `razz_feature_contributors`, `vault_item_artists`, ...) and attached to the parent record under the junction's name, because works and texts have no o2m alias fields. Secondary lookups go through `optional()`, so a failing relation never takes a page down. `work_files`/`vault_item_files`/`razz_feature_files` point at the legacy `files` table (use its `url`). The `*_file_id` columns on works, texts, artists and issues point at `directus_files` (served via `/assets/:id`).
+3. `normalise.js` maps raw records to flat UI shapes. It reads junction rows by their key (`artist_id`, `work_id`, `text_id`, `contributor_id`, `file_id`) and skips rows whose relation did not expand. Body and description fields go through `bodyToParagraphs()`, which parses HTML with `DOMParser` and keeps only text, so editor markup is never injected. Components render paragraphs via `components/ui/Prose`.
+4. `useDirectusResource(loader, initialData, normalize, resourceKey)` returns `{ data, status, error }`. Refetches are keyed on `resourceKey`: pass the slug, or `slug:dependency` for loaders that depend on another resource.
+5. `resourceState.js`: `gateStatus(...resources)` turns the primary resources into `loading | closed | error | success`. `closed` is a 403, shown as "not open yet". Render it with `components/layout/PageState`. `usePageTitle()` sets `document.title`.
 
-`media.js` builds `/assets/:id` URLs (with optional width/height/quality/fit/format transforms) and alt text from Directus file objects or ids. Always go through it rather than hand-building asset URLs.
+`media.js` builds asset URLs. Don't add transform params unless Directus asset transforms are confirmed enabled.
 
-**Pages.** `pages/HomePage.jsx` and `ArtistPage.jsx` are standalone. The other routes (`/about`, `/artists`, `/works[/:slug]`, `/texts[/:slug]`, `/journal[/:slug]`, `/vault`, `/contact`) are all exported from `pages/CorePages.jsx`. Render states use `components/ui/ContentState` (`loading` / `error` / `empty`). Some pages cross-reference works and texts by slug client-side, for example related works and texts.
+**Pages** are grouped by section: `CorePages.jsx` (About, Ethos, Artists, Works, Texts), `JournalPages.jsx`, `RazzPages.jsx` (issues, features, contributors), `VaultPages.jsx` (Vault and Shop), `CommissionPages.jsx`, `FormPages.jsx` (Contact, Newsletter), plus `HomePage.jsx` and `ArtistPage.jsx`. The Ethos page renders the published text with slug `ethos` when one exists. Commission disciplines fall back to the site-plan list when `commission_types` is not readable. No page shows a purchase action: Vault and Shop items offer "Request information" only, per the build plan.
 
-**Components.** `components/atmosphere/` is the visual layer (Galaxy, Noise, Particles, `glowcanvas`/`dithercanvas` image effects). `cards/` and `ui/` are reusable content components. `layout/` has Navbar, Footer, SiteShell and CardGrid. Each component has a co-located `.css` file with global BEM-style class names, plus `src/index.css` for global styles and fonts.
+**Components.** `atmosphere/` (visual layer), `cards/` (`WorkCard`, `ArtistCard` with `basePath`, `TextCard`, `EntryCard` for editorial lists, `VaultItemCard`), `rails/RelatedRail` (cross-links), `forms/` (`EnquiryForm` is config-driven with validation and a honeypot; `NewsletterForm`), `layout/` and `ui/`. Each component has a co-located `.css` with global BEM-style class names. Shared page styles live in `pages/CorePages.css`. Note that `HomePage.css` sets `form { justify-self: center }` globally.
 
-**Mock data.** `src/mock/*.js` holds leftover mock content. Nothing imports it now that pages query Directus.
+**Mock data.** `src/mock/*.js` holds leftover mock content. Nothing imports it.
 
 ## Notes
 
-- `HomePage.jsx` starts with a large commented-out previous version. The live implementation begins at the `import { Link }` after it.
-- The Directus CMS is a separate deployment (cms.upset.live) and is not in this repo.
+- `HomePage.jsx` starts with a large commented-out previous version. The live implementation begins at the first `import`.
+- `glowcanvas`/`dithercanvas` call `getImageData`, which fails on cross-origin images without CORS. Directus images only get the effect through the dev proxy (same origin) or once CORS is enabled.

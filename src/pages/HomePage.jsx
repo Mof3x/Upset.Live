@@ -77,10 +77,14 @@
 //     )
 // }
 
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import GlowCanvas from "../components/atmosphere/glowcanvas";
 import DitherCanvas from "../components/atmosphere/dithercanvas";
 import ContentState from "../components/ui/ContentState";
+import { isForbiddenError } from "../lib/directus";
+import { submitForm, validateEnquiry } from "../lib/forms";
+import { usePageTitle } from "../lib/resourceState";
 import { getPublishedArtists, getPublishedWorks } from "../lib/queries";
 import { normalizeArtist, normalizeWork } from "../lib/normalise";
 import useDirectusResource from "../lib/useDirectusResource";
@@ -132,7 +136,7 @@ function ArtistCard({ artist }) {
       <div className="artist-card__content">
         <p className="eyebrow">Featured artist</p>
         <h3>{artist.name}</h3>
-        <p>{artist.bio}</p>
+        {artist.excerpt && <p>{artist.excerpt}</p>}
         <Link className="text-link" to={`/artists/${artist.slug}`}>
           Meet the artist
         </Link>
@@ -169,7 +173,7 @@ function FeaturedWorkCard({ work }) {
         </Link>
       </div>
 
-      <ArtistCard artist={work.artist} />
+      {work.artist?.slug && <ArtistCard artist={work.artist} />}
     </article>
   );
 }
@@ -195,10 +199,34 @@ function WorkCard({ work }) {
 }
 
 function NewsletterCard({ newsletter }) {
-  function handleSubmit(event) {
-    event.preventDefault();
+  const [state, setState] = useState({ status: "idle", message: "" });
 
-    // Later: send this to your newsletter_signups endpoint.
+  async function handleSubmit(event) {
+    event.preventDefault();
+    if (state.status === "sending") return;
+
+    const email = new FormData(event.currentTarget).get("email");
+    const errors = validateEnquiry({ email }, ["email"]);
+    if (errors.email) {
+      setState({ status: "invalid", message: errors.email });
+      return;
+    }
+
+    setState({ status: "sending", message: "" });
+    try {
+      const result = await submitForm("newsletter", { email }, {
+        subject: "UpsetXociety: newsletter signup",
+        summaryLines: [`Email address: ${email}`],
+      });
+      if (result.mode === "mailto") {
+        window.location.href = result.href;
+        setState({ status: "mailto", message: "Your email app should open with the signup ready to send." });
+      } else {
+        setState({ status: "sent", message: "You are on the list. Welcome to the house." });
+      }
+    } catch (error) {
+      setState({ status: "failed", message: error.message });
+    }
   }
 
   return (
@@ -223,14 +251,17 @@ function NewsletterCard({ newsletter }) {
           required
         />
 
-        <button type="submit">{newsletter.buttonLabel}</button>
+        <button type="submit" disabled={state.status === "sending"}>
+          {state.status === "sending" ? "Sending…" : newsletter.buttonLabel}
+        </button>
       </form>
+      <p role="status" aria-live="polite">{state.message}</p>
     </article>
   );
 }
 
 export default function HomePage() {
-  const { data: works, status: worksStatus } = useDirectusResource(
+  const { data: works, status: worksStatus, error: worksError } = useDirectusResource(
     getPublishedWorks,
     [],
     normalizeWork
@@ -241,39 +272,35 @@ export default function HomePage() {
     normalizeArtist
   );
 
-  if (worksStatus === "loading" || artistsStatus === "loading") {
+  usePageTitle("");
+
+  // Works drive the page; artists only enrich the featured card.
+  if (worksStatus === "loading") {
     return <main className="homepage page-content"><ContentState status="loading" /></main>;
   }
 
-  if (worksStatus === "error" || artistsStatus === "error") {
-    return <main className="homepage page-content"><ContentState status="error" /></main>;
-  }
-
-  if (!works.length) {
-    return <main className="homepage page-content"><ContentState status="empty" /></main>;
-  }
-
-  const featuredRecord = works.find((work) => work.featured) || works[0];
-  const featuredArtist = artists.find(
-    (artist) => artist.slug === featuredRecord.artist?.slug
-  );
-  const featuredWork = {
+  const featuredRecord = works.find((work) => work.featured) || works[0] || null;
+  const featuredArtist =
+    artistsStatus === "success" && featuredRecord
+      ? artists.find((artist) => artist.slug === featuredRecord.artist?.slug)
+      : null;
+  const featuredWork = featuredRecord && {
     ...featuredRecord,
     eyebrow: "Featured work",
     href: `/works/${featuredRecord.slug}`,
     ctaLabel: "View the work",
-    artist: featuredArtist || featuredRecord.artist,
+    artist: featuredArtist || null,
   };
   const hero = {
     title: "UpsetXociety",
     subtitle: "Art House",
-    image: featuredRecord.image,
-    imageAlt: featuredRecord.imageAlt,
-    href: `/works/${featuredRecord.slug}`,
+    image: featuredRecord?.image || "",
+    imageAlt: featuredRecord?.imageAlt || "",
+    href: featuredRecord ? `/works/${featuredRecord.slug}` : "/works",
     ctaLabel: "Enter the archive",
   };
   const relatedWorks = works
-    .filter((work) => work.slug !== featuredRecord.slug)
+    .filter((work) => work.slug !== featuredRecord?.slug)
     .slice(0, 4)
     .map((work) => ({
       ...work,
@@ -297,20 +324,26 @@ export default function HomePage() {
       <section className="homepage__content">
         <QuoteCard quote={quote} />
 
-        <FeaturedWorkCard work={featuredWork} />
+        {worksStatus === "error" && (
+          <ContentState status={isForbiddenError(worksError) ? "closed" : "error"} />
+        )}
 
-        <section className="related-works-section" aria-labelledby="related-title">
-          <header className="card-heading">
-            <p className="eyebrow">Continue exploring</p>
-            <h2 id="related-title">Related works</h2>
-          </header>
+        {featuredWork && <FeaturedWorkCard work={featuredWork} />}
 
-          <div className="related-works-grid">
-            {relatedWorks.map((work) => (
-              <WorkCard key={work.id} work={work} />
-            ))}
-          </div>
-        </section>
+        {relatedWorks.length > 0 && (
+          <section className="related-works-section" aria-labelledby="related-title">
+            <header className="card-heading">
+              <p className="eyebrow">Continue exploring</p>
+              <h2 id="related-title">Related works</h2>
+            </header>
+
+            <div className="related-works-grid">
+              {relatedWorks.map((work) => (
+                <WorkCard key={work.slug} work={work} />
+              ))}
+            </div>
+          </section>
+        )}
 
         <NewsletterCard newsletter={newsletter} />
       </section>

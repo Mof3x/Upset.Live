@@ -10,6 +10,7 @@ export default function TextCard({
   type,
   category,
   year,
+  date,
   excerpt,
   author,
   tags = [],
@@ -17,13 +18,13 @@ export default function TextCard({
   return (
     <article className="text-card">
       <div className="text-card__body">
-        <MetaLine items={[type, category, year]} />
+        <MetaLine items={[category || type, date || year]} />
 
         <h3 className="text-card__title">
           <Link to={`/texts/${slug}`}>{title}</Link>
         </h3>
 
-        {author && (
+        {author?.slug && (
           <p className="text-card__author">
             By <Link to={`/artists/${author.slug}`}>{author.name}</Link>
           </p>

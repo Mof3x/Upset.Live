@@ -1,10 +1,18 @@
-const directusUrl = (import.meta.env.VITE_DIRECTUS_URL || "").replace(/\/$/, "");
+const configuredUrl = (import.meta.env.VITE_DIRECTUS_URL || "").replace(/\/$/, "");
+
+// In development, requests go through the Vite proxy (/cms -> VITE_DIRECTUS_URL,
+// see vite.config.js) so they work without Directus CORS. Set
+// VITE_DIRECTUS_DEV_PROXY=false to call Directus directly in development.
+const useDevProxy =
+  import.meta.env.DEV && Boolean(configuredUrl) && import.meta.env.VITE_DIRECTUS_DEV_PROXY !== "false";
+const directusUrl = useDevProxy ? `${window.location.origin}/cms` : configuredUrl;
 
 export class DirectusRequestError extends Error {
-  constructor(message, { status, url, details } = {}) {
+  constructor(message, { status, code, url, details } = {}) {
     super(message);
     this.name = "DirectusRequestError";
     this.status = status;
+    this.code = code;
     this.url = url;
     this.details = details;
   }
@@ -12,6 +20,24 @@ export class DirectusRequestError extends Error {
 
 export function getDirectusUrl() {
   return directusUrl;
+}
+
+// A 403 means the Public role cannot read this collection or field yet.
+// Pages show a "not open yet" state for it instead of a generic error.
+export function isForbiddenError(error) {
+  return (
+    error instanceof DirectusRequestError &&
+    (error.status === 403 || error.code === "FORBIDDEN")
+  );
+}
+
+// Directus rejects the whole request when one requested field is not readable
+// (or does not exist). This matches that case, not collection-level refusals.
+function isFieldPermissionError(error) {
+  return (
+    isForbiddenError(error) &&
+    /permission to access fields?\s/i.test(error.message || "")
+  );
 }
 
 function buildUrl(path, params = {}) {
@@ -37,10 +63,7 @@ function buildUrl(path, params = {}) {
   return url;
 }
 
-export async function directusRequest(
-  path,
-  { params, signal, headers = {}, ...options } = {}
-) {
+async function fetchJson(path, { params, signal, headers = {}, ...options } = {}) {
   const url = buildUrl(path, params);
   let response;
   let payload;
@@ -55,6 +78,7 @@ export async function directusRequest(
       },
     });
   } catch (error) {
+    if (error?.name === "AbortError") throw error;
     throw new DirectusRequestError("Unable to reach the Directus API.", {
       url: url.toString(),
       details: error,
@@ -68,11 +92,12 @@ export async function directusRequest(
   }
 
   if (!response.ok) {
-    const apiMessage = payload?.errors?.[0]?.message;
+    const apiError = payload?.errors?.[0];
     throw new DirectusRequestError(
-      apiMessage || `Directus request failed with status ${response.status}.`,
+      apiError?.message || `Directus request failed with status ${response.status}.`,
       {
         status: response.status,
+        code: apiError?.extensions?.code,
         url: url.toString(),
         details: payload,
       }
@@ -80,6 +105,34 @@ export async function directusRequest(
   }
 
   return payload?.data ?? payload;
+}
+
+// GET requests that ask for specific fields fall back once to `fields=*`
+// (without sorting) when Directus refuses a field. `*` returns only what the
+// Public role may read, so pages keep rendering the basics while permissions
+// are being configured. Filters are never dropped, so unpublished records
+// stay hidden.
+export async function directusRequest(path, options = {}) {
+  try {
+    return await fetchJson(path, options);
+  } catch (error) {
+    const method = (options.method || "GET").toUpperCase();
+    const params = options.params || {};
+
+    if (method !== "GET" || !params.fields || params.fields === "*" || !isFieldPermissionError(error)) {
+      throw error;
+    }
+
+    if (import.meta.env.DEV) {
+      console.warn(
+        `[directus] ${path}: ${error.message} Retrying with fields=* until the Public role can read the requested fields.`
+      );
+    }
+
+    // eslint-disable-next-line no-unused-vars
+    const { sort, ...rest } = params;
+    return fetchJson(path, { ...options, params: { ...rest, fields: "*" } });
+  }
 }
 
 export async function getCollection(collection, options = {}) {
@@ -107,5 +160,7 @@ export async function getItemBySlug(collection, slug, options = {}) {
 }
 
 export async function getSingleton(collection, options = {}) {
-  return directusRequest(`/items/${collection}`, options);
+  const result = await directusRequest(`/items/${collection}`, options);
+  // site_settings is not configured as a singleton, so it arrives as a list.
+  return Array.isArray(result) ? result[0] || null : result;
 }
