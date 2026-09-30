@@ -86,3 +86,12 @@ Visitors can browse the core archive, open an artist/work/text detail page, use 
 ## Recommended next milestone
 
 Complete P0, then ship one complete vertical slice: Directus-backed Works listing -> Work detail -> Artist page -> related Text -> newsletter signup. This proves the content model, routing, media delivery, and primary discovery flow before expanding to Razz, Vault, Shop, and commissions.
+
+30/09/2026 - public site sections + Directus wiring (branch `directus-pages`)
+
+- Added pages from the plan: Ethos, Journal (Directus), Razz issues/features/contributors, Vault + Shop (`/shop/prints` categories), Commissions + discipline briefs, Contact, Newsletter.
+- Data layer reads relations from the junction collections (no alias fields needed) and degrades gracefully while Public permissions are incomplete ("not open yet" instead of errors).
+- Forms validate and open a pre-filled email until a server-side endpoint exists (`VITE_FORMS_ENDPOINT`); nothing writes to Directus from the browser.
+- Found: the live Directus sends no CORS headers, so browsers cannot read it. Dev uses a Vite proxy; production needs `CORS_ENABLED`/`CORS_ORIGIN` on Heroku (not changed).
+- Prepared, not run: `public-site-fields.ps1` (artists.discipline, razz is_published) and `public-site-permissions.ps1` (Public read on published content + images), both manifest-first with undo; offline simulation 40/40.
+- Still to do: run the Directus package, enable CORS, publish real content, forms endpoint, Vault/Razz/legacy-files permissions.
