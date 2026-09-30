@@ -8,8 +8,11 @@ import WorkCard from "../components/cards/WorkCard";
 import TextLink from "../components/ui/TextLink";
 import ContentState from "../components/ui/ContentState";
 import "./ArtistPage.css";
-import { getPublishedArtistBySlug } from "../lib/queries";
-import { normalizeArtist } from "../lib/normalise";
+import {
+  getPublishedArtistBySlug,
+  getPublishedWorksByArtistSlug,
+} from "../lib/queries";
+import { normalizeArtist, normalizeWork } from "../lib/normalise";
 import useDirectusResource from "../lib/useDirectusResource";
 
 export default function ArtistPage() {
@@ -21,11 +24,18 @@ export default function ArtistPage() {
     slug
   );
 
-  if (status === "loading") {
+  const { data: works, status: worksStatus } = useDirectusResource(
+    ({ signal }) => getPublishedWorksByArtistSlug(slug, { signal }),
+    [],
+    normalizeWork,
+    slug
+  );
+
+  if (status === "loading" || worksStatus === "loading") {
     return <ContentState status="loading" />;
   }
 
-  if (status === "error") {
+  if (status === "error" || worksStatus === "error") {
     return <ContentState status="error" />;
   }
 
@@ -78,9 +88,9 @@ export default function ArtistPage() {
           linkLabel="View all works"
         />
 
-        {artist.works.length ? (
+        {works.length ? (
           <CardGrid min="220px">
-            {artist.works.map((work) => (
+            {works.map((work) => (
               <WorkCard key={work.slug} {...work} />
             ))}
           </CardGrid>

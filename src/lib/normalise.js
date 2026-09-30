@@ -12,7 +12,15 @@ function asParagraphs(value) {
 
 function relationRecord(relation) {
   if (!relation) return null;
-  return relation.artist || relation.work || relation.file || relation;
+  return (
+    relation.artist_id ||
+    relation.work_id ||
+    relation.file_id ||
+    relation.artist ||
+    relation.work ||
+    relation.file ||
+    relation
+  );
 }
 
 function relationRecords(value) {
@@ -37,7 +45,7 @@ export function normalizeArtist(record = {}) {
     record.image
   );
   const bio = asParagraphs(record.bio);
-  const normalizedWorks = relationRecords(record.works).map(normalizeWork);
+  const normalizedWorks = (record.works || []).map(normalizeWork);
 
   return {
     id: record.id,
@@ -69,13 +77,16 @@ export function normalizeWork(record = {}) {
     record.artists || record.work_artists || record.artist
   ).map(artistSummary);
   const primaryArtist = artists[0] || artistSummary(record.artist);
-  const gallery = relationRecords(record.files || record.work_files).map(
-    (file) => ({
-      url: getMediaUrl(file),
-      alt: getMediaAlt(file, record.title || "Work image"),
-      caption: file.caption || "",
-    })
-  );
+  const gallery = (record.files || record.work_files || [])
+    .filter(Boolean)
+    .map((junction) => {
+      const file = relationRecord(junction);
+      return {
+        url: getMediaUrl(file),
+        alt: getMediaAlt(file, record.title || "Work image"),
+        caption: junction.caption || file.caption || "",
+      };
+    });
   const type =
     record.type ||
     record.category?.name ||
