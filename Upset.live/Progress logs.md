@@ -17,6 +17,8 @@ Detailed implementation guide: [Functional site build plan](Functional%20site%20
 
 ## Current state
 
+> Superseded on 01/10/2026 by [Progress report](Progress%20report.md). Kept below as the 19/09 record.
+
 - The Vite/React frontend builds successfully with `npm run build`.
 - The app is still a frontend prototype: content comes from local mock objects, not Directus.
 - Only `/` and `/artists/:slug` are registered in `src/App.jsx`.
@@ -35,6 +37,8 @@ Detailed implementation guide: [Functional site build plan](Functional%20site%20
 Visitors can browse the core archive, open an artist/work/text detail page, use the navigation without dead links, submit a newsletter or contact enquiry to a real endpoint, and receive useful loading, empty, not-found, and error states. Editors can publish content in Directus without a frontend code change.
 
 ## Ordered TODO
+
+> Superseded on 01/10/2026 by [Master TODO](Master%20TODO.md). Kept below as the 19/09 record.
 
 ### P0 - make the existing prototype coherent
 
