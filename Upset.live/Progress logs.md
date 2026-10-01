@@ -99,3 +99,12 @@ Complete P0, then ship one complete vertical slice: Directus-backed Works listin
 - Found: the live Directus sends no CORS headers, so browsers cannot read it. Dev uses a Vite proxy; production needs `CORS_ENABLED`/`CORS_ORIGIN` on Heroku (not changed).
 - Prepared, not run: `public-site-fields.ps1` (artists.discipline, razz is_published) and `public-site-permissions.ps1` (Public read on published content + images), both manifest-first with undo; offline simulation 40/40.
 - Still to do: run the Directus package, enable CORS, publish real content, forms endpoint, Vault/Razz/legacy-files permissions.
+
+01/10/2026 - Directus public access applied; go-live plan
+
+- Fields script run live: APPLIED - PASS (`artists.discipline` added).
+- Permissions script run live: APPLIED - PASS - PARTIALLY VERIFIED (8 writes; manifest matched the offline prediction). Anonymous visitors can read published records, their links and their images only.
+- Decided: live address upset.live; works.price, artists.year_of_birth and artists.is_collective_member are public on published records; first proof is one mock test record, then unpublish.
+- Found: GitHub Pages serves the raw repo (blank page); the deploy workflow fails without the `VITE_DIRECTUS_URL` variable; upset.live is not attached to the repo; CORS still off; `work_artists` has no rows yet.
+- Added the deep-link fallback to the deploy workflow and a GET-only `-Operation Verify` to the permissions script.
+- Full status: [Progress report](Progress%20report.md) · [Master TODO](Master%20TODO.md)

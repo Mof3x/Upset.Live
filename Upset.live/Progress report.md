@@ -1,19 +1,27 @@
-# UpsetXociety progress report: 01/10/2026
+# UpsetXociety progress report: 01/10/2026 (updated late evening)
 
 Replaces the "Current state" section of the 19/09/2026 audit in [Progress logs](Progress%20logs.md).
 To-do items live in [Master TODO](Master%20TODO.md). The step-by-step method is in [Functional site build plan](Functional%20site%20build%20plan.md).
 
 ## Summary
 
-The frontend is now a complete, Directus-backed site with every section from the sitemap. It lives on the branch
-`directus-pages`, which is not merged or pushed. It cannot show real content yet, for three reasons outside the code:
+The frontend is a complete, Directus-backed site covering the whole sitemap. It lives on the branch `directus-pages`
+(7 commits ahead of `main`, not pushed).
 
-1. Directus blocks browsers (no CORS).
-2. The Public role cannot read most of what the site needs.
-3. Nothing is published.
+**On the Directus side the content pipeline is now open.** Both prepared scripts have been run live:
+- the fields script: APPLIED - PASS;
+- the Public read permissions: APPLIED - PASS - PARTIALLY VERIFIED.
 
-The fixes for 2 are written and tested offline but not run. The credentials found in the public repository's history
-have already been rotated (confirmed 01/10/2026).
+Anonymous visitors can now read published records, their links and their images, and nothing unpublished.
+
+Three things still stop live content appearing on upset.live:
+1. **CORS is off on Directus**, so a browser on the real site cannot read the CMS.
+2. **The site is not deployed.** GitHub Pages serves the raw repository files (a blank page), the deploy workflow fails for a
+   missing setting, and upset.live is not attached to the repo.
+3. **Nothing is published**, and no work is linked to an artist yet (`work_artists` is empty).
+
+The approved go-live plan covers all three. The remaining steps are yours (settings and CMS), plus a merge to `main`
+when you say so.
 
 ## At a glance
 
@@ -22,85 +30,94 @@ have already been rotated (confirmed 01/10/2026).
 | Routes and pages | Done | 24 routes. Home, About, Ethos, Artists, Works, Texts, Journal, Razz, Contributors, Vault, Shop (incl. `/shop/prints`), Commissions, Contact, Newsletter, 404 |
 | Data layer (Directus) | Done | Reads published records. Relations come from the junction tables. Shows "not open yet" instead of crashing while access is missing |
 | Lint / build | Passing | `npm run lint` and `npm run build`, 01/10/2026 |
-| Live content on the site | Blocked | No CORS, Public role too narrow, nothing published |
-| Forms | Partly done | Validation, spam trap and success/failure states work. They open a pre-filled email until a server endpoint exists. Nothing writes to Directus from the browser |
-| Commerce | Request-info only | No buy button anywhere, as the build plan requires. Vault and Shop items offer "Request information" |
-| Directus field/permission changes | Prepared, not run | `public-site-fields.ps1`, `public-site-permissions.ps1`, each with undo. Offline simulation 40/40 |
-| Artist role (Directus) | Mostly done | As last recorded 30/09: S1–S6 passed (S4 and S5 PARTIALLY VERIFIED), S8a report ready, cleanup not authorised |
-| Deployment | Exists, unconfirmed | `.github/workflows/deploy-pages.yml` deploys GitHub Pages on every push to `main` |
-| Tests | None | No test runner configured |
-| Security | Resolved | Credentials in public git history were already rotated (confirmed 01/10/2026; see below) |
+| Directus fields | **Applied** | `artists.discipline` created; the Razz `is_published` columns already existed (APPLIED - PASS, 11:17) |
+| Directus Public read | **Applied** | 8 writes, APPLIED - PASS - PARTIALLY VERIFIED (21:15). The live manifest matched the offline prediction (`94293BA4…`) |
+| Live content on the site | Blocked | CORS off · site not deployed · nothing published (the Public role is now fixed) |
+| Deployment | Broken | Pages source is "branch" (serves raw files); the "Deploy site" workflow fails on the missing `VITE_DIRECTUS_URL`; upset.live shows "Site not found". The deep-link fallback is ready (`0e2d40a`) |
+| Forms | Partly done | Validation, spam trap and success/failure states work. They open a pre-filled email until a server endpoint exists |
+| Commerce | Request-info only | No buy button anywhere. Vault and Shop items offer "Request information" |
+| Artist role (Directus) | Mostly done | As last recorded 30/09: S1–S6 passed, S8a report ready, cleanup not authorised |
+| Tests | Script simulation only | `sim\run-sim.ps1` 90/90 for the Directus scripts; no frontend test runner |
+| Security | Resolved | Credentials in public git history were already rotated (confirmed 01/10/2026) |
+
+## Decisions made (01/10/2026)
+
+- **Live address:** `https://upset.live` (custom domain on GitHub Pages; base path `/`).
+- **Public fields:** `works.price`, `artists.year_of_birth` and `artists.is_collective_member` are intentionally public on
+  published records. The permissions script keeps exactly those three on their own published-only rules and still blocks
+  any other sensitive grant. The site does not request or display them today.
+- **First proof:** one mock test record, published briefly to prove the pipeline end to end, then unpublished.
+- **Commerce:** request-info only for now (still to confirm for the first release).
 
 ## Frontend: what was done
 
-- **Pages.** Every section of the sitemap now has a template that Directus fills, with no page per record. Detail pages
-  cross-link outward (artist ↔ work ↔ text, more in the same category, commissions), following the cross-linking principle.
-- **Data.** `src/lib/` reads only published records. If Directus refuses a field, it retries with what is allowed
-  rather than failing. Drafts are never shown, because the publish filter is never dropped.
-- **Safety.** Body text from the CMS is shown as plain paragraphs, so no editor HTML is injected. Forms have a honeypot and never hold credentials.
-- **Fixes along the way.**
-  - Two filename casing bugs that would have broken a Linux or GitHub Actions build (`SiteShell`, `TextLink`).
-  - A homepage crash when a featured work had no artist.
-  - The mobile menu now closes after a tap.
+- **Pages.** Every sitemap section has a template that Directus fills. Detail pages cross-link outward (artist ↔ work ↔
+  text, more in the same category, commissions).
+- **Data.** `src/lib/` reads only published records. Now that the Public role allows the site's fields, its normal
+  requests succeed, and the `fields=*` fallback no longer kicks in.
+- **Safety.** CMS text is shown as plain paragraphs, so no editor HTML is injected. Forms have a honeypot.
+- **Fixes along the way:**
+  - filename casing bugs that would have broken a Linux build;
+  - a homepage crash when a featured work had no artist;
+  - the mobile menu now closes after a tap;
+  - the GitHub Pages deep-link fallback (`404.html`).
 - **Dev setup.** `npm run dev` proxies `/cms` to Directus, so local work does not need CORS.
-- **19/09 audit items now closed:**
-  - `ArtistCard` is repaired.
-  - No `/public/` asset paths remain.
-  - Mock data is no longer imported anywhere.
-  - Listing and detail templates exist.
-  - The footer reads site settings.
 
 ## Directus / backend
 
-- **Live checks (anonymous GET requests, 30/09):**
-  - The API is up, version 12.1.1.
-  - Category lists and site settings are publicly readable.
-  - works, artists, texts and journal return nothing, because nothing is published, and `id` and the image fields are refused.
-  - The junction tables, files, Razz, Vault and commission types are all refused.
-- **Schema gaps:**
-  - works and texts have no alias fields for their artists, files or related works. Adding them through Directus 12.1.1
-    rebuilds the foreign keys, which goes against decision D12. The site reads the junction tables instead.
-  - `artists.discipline` does not exist.
-  - Razz has no publish flag. The fields script adds both.
-- **Prepared package (not run).** It lives outside the repo, in the session scratchpad folder `public-site`. Both scripts are
-  GET-only until run with `-Mode Execute -ManifestSha`. They stop on any unexpected live state, verify every write
-  from the full permission list, and check that anonymous visitors see exactly the published records. Those sets are
-  computed independently of Directus's own filter, so they would catch the known silent-filter-drop bug. The expected
-  live result is **APPLIED - PASS - PARTIALLY VERIFIED**: with nothing published (D11), only the "drafts stay hidden" side can be proven.
-- **Artist role package** (as last recorded 30/09/2026; confirm before acting):
-  - S1–S6 passed.
-  - The I-75 upload-forgery fix is applied and verified.
-  - The S8a report is ready, and a notes correction (`CorrectNotes`) is prepared but not run.
-  - Cleanup (S8b) is disabled, with audit holds on two file rows.
-  - The mock Artist account stays until testing ends.
+- **Public read now (run 20261001-211516):**
+  - rules #2 works, #1 artists, #7 texts and #9 journal got only the missing site fields. Their `_and` publish filters and
+    existing fields are unchanged;
+  - new rules #93 `work_artists`, #94 `text_authors` and #95 `text_related_works` let anonymous visitors read only links whose both sides are published;
+  - new rule #96 `directus_files` lets them read only images used by published works, artists, texts or journal entries.
+- **Verified live in that run:**
+  - every site request is permitted;
+  - anonymous visitors see exactly the published records (0 today), 0 of 2 `text_authors` rows and 0 of 8 files;
+  - an unused file is refused at `/assets`;
+  - every other rule and the Public attachment are unchanged.
+
+  Published visibility is BLOCKED until something is published (D11).
+- **Data facts from that run:** `work_artists` has 0 rows, `text_related_works` has 0, `text_authors` has 2 and there are 8 files.
+  Credits and related-text links only appear once those link rows exist.
+- **Prepared, not run:** `public-site-permissions.ps1 -Operation Verify`. It is GET-only and never writes: it checks the rules are still as applied, then
+  reruns the anonymous checks. Use it after publishing (expect VERIFIED - PASS) and after unpublishing. The package lives in the session
+  scratchpad folder `public-site`, with hashes in its README.
+- **Artist role package** (as last recorded 30/09/2026; confirm before acting): S1–S6 passed, I-75 is verified, the S8a report is ready,
+  `CorrectNotes` is prepared but not run, S8b cleanup is disabled, and the mock Artist account stays until testing ends.
 
 ## Risks found
 
-1. **Exposed credentials: resolved.** Repo `Mof3x/Upset.Live` is public. `Upset.live/Backend/Backend.md` (commits `96820f1`,
-   `cb5acab`) contains old Supabase database, storage and Resend email credentials. They were already rotated (confirmed
-   01/10/2026). The old values stay in the git history but no longer work. No script has checked the rotation.
-2. **Pushing `main` deploys.** The Pages workflow builds on every push to `main` and needs the repo variable `VITE_DIRECTUS_URL`.
-3. **Deep links on GitHub Pages.** The site uses client-side routes, and Pages returns 404 when a detail URL is refreshed
-   unless a `404.html` fallback is added. The asset base path also depends on whether the site is served at the custom
-   domain or at `/Upset.Live/`.
-4. **Image effects.** The glow and dither canvas effects cannot process Directus images from another origin without CORS.
-   The images still show, just without the effect.
+1. **Exposed credentials: resolved.** The old Supabase and Resend credentials in public git history were already rotated (confirmed 01/10/2026).
+2. **Pushing `main` deploys.** Once Pages is switched to "GitHub Actions", every push to `main` publishes the site.
+3. **Published means public, including the API.** While the test record is published, its price, year of birth and
+   collective-member flag can be read through the API. That is the intended rule, but it is worth remembering for mock data.
+4. **Image effects.** The glow and dither canvas effects cannot process cross-origin Directus images. The images still show,
+   just without the effect. This can be fixed after CORS is on.
 
 ## How this was verified
 
-- lint and build pass (01/10/2026).
-- Every route was opened in a browser against the live CMS through the dev proxy, on desktop and mobile, with no console errors from the app and no horizontal overflow.
-- Live API state was checked with anonymous and field-by-field GET requests only.
-- The repository's visibility comes from the public GitHub API. The credential check printed masked shapes only, never values.
-- The Directus scripts ran against a fake Directus with no network access: 40 of 40 checks pass. The simulation caught two real script bugs, both fixed.
+- lint and build pass (01/10/2026). Every route was opened in a browser against the live CMS through the dev proxy, on desktop and mobile.
+- Directus changes come from your live run records:
+  - fields run `20261001-111759` (APPLIED - PASS);
+  - permissions run `20261001-211516` (APPLIED - PASS - PARTIALLY VERIFIED, every check PASS, nothing failed).
+- Read-only checks today:
+  - `cms.upset.live` returns no `Access-Control-Allow-Origin`;
+  - `mof3x.github.io/Upset.Live/` serves `/src/main.jsx`;
+  - `upset.live` returns GitHub's "Site not found";
+  - the last "Deploy site" run failed at "Require public Directus URL";
+  - anonymous `works?fields=id` is now allowed.
+- The Directus scripts pass 90/90 offline checks against a fake Directus.
 
 ## Next milestone
 
-Make one record appear on the live site end to end:
+Make the test record appear on upset.live, then hide it again:
 
-1. Enable CORS.
-2. Run the permissions script.
-3. Publish one work with an artist, an image and a related text.
-4. Confirm it renders.
-
-That turns PARTIALLY VERIFIED into PASS and proves the whole pipeline.
+1. GitHub settings:
+   - add the repo variable `VITE_DIRECTUS_URL`;
+   - set the Pages source to **GitHub Actions**;
+   - set the custom domain to `upset.live` and point its DNS at GitHub Pages.
+2. Turn on CORS on Heroku for `https://upset.live`.
+3. Merge `directus-pages` into `main`, which deploys the site.
+4. Publish one mock work (with thumbnail) and its artist, **create** the work↔artist link, and add one linked text. Run `-Operation Verify`
+   (expect VERIFIED - PASS) and check the pages.
+5. Unpublish, then run `-Operation Verify` again.
