@@ -43,6 +43,11 @@ jobs:
       - name: Build site
         run: npm run build
 
+      # The app uses client-side routes (/works/<slug>, ...). GitHub Pages serves 404.html for unknown paths,
+      # so a copy of index.html lets a refreshed or shared deep link load the app instead of a 404 page.
+      - name: Add SPA fallback for deep links
+        run: cp dist/index.html dist/404.html
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
