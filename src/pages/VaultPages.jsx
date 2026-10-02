@@ -15,6 +15,7 @@ import { normalizeVaultItem } from "../lib/normalise";
 import { gateStatus, usePageTitle } from "../lib/resourceState";
 import useDirectusResource from "../lib/useDirectusResource";
 import "./CorePages.css";
+import { recordPath } from "../lib/paths";
 
 // Only open_public items that are not private are ever requested (see queries.js).
 // The Shop is the public catalogue subset of the open Vault.
@@ -111,7 +112,7 @@ function ShopListing({ categorySlug }) {
         activeCategory={active ? active.name : "All"}
         onChange={(label) => {
           const target = shopCategories.find((category) => category.name === label);
-          navigate(target ? `/shop/${target.slug}` : "/shop");
+          navigate(target ? recordPath("/shop", target.slug) : "/shop");
         }}
       />
       <ItemGrid items={visible} basePath="/shop" />
@@ -161,7 +162,7 @@ function VaultObject({ slug, basePath, sectionLabel }) {
               {item.artists.map((artist) => (
                 <li key={artist.slug}>
                   {artist.role ? `${artist.role}: ` : "By "}
-                  <Link to={`/artists/${artist.slug}`}>{artist.name}</Link>
+                  <Link to={recordPath("/artists", artist.slug)}>{artist.name}</Link>
                 </li>
               ))}
             </ul>
@@ -213,7 +214,7 @@ function VaultObject({ slug, basePath, sectionLabel }) {
         groups={[
           {
             label: "Artists",
-            items: item.artists.map((artist) => ({ to: `/artists/${artist.slug}`, label: `Meet ${artist.name}` })),
+            items: item.artists.map((artist) => ({ to: recordPath("/artists", artist.slug), label: `Meet ${artist.name}` })),
           },
           { label: sectionLabel, items: [{ to: basePath, label: `Back to the ${sectionLabel.toLowerCase()}` }] },
         ]}

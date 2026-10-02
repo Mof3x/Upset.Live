@@ -4,6 +4,7 @@ import MetaLine from "../ui/MetaLine";
 import TagList from "../ui/TagList";
 import TextLink from "../ui/TextLink";
 import "./WorkCard.css";
+import { recordPath } from "../../lib/paths";
 
 export default function WorkCard({
   slug,
@@ -20,7 +21,7 @@ export default function WorkCard({
     <article className="work-card">
       {image && (
         <Link
-          to={`/works/${slug}`}
+          to={recordPath("/works", slug)}
           className="work-card__image-link"
           aria-label={`View ${title}`}
         >
@@ -34,13 +35,13 @@ export default function WorkCard({
         <MetaLine items={[type, year]} />
 
         <h3 className="work-card__title">
-          <Link to={`/works/${slug}`}>{title}</Link>
+          <Link to={recordPath("/works", slug)}>{title}</Link>
         </h3>
 
         {artist?.slug && (
           <p className="work-card__artist">
             By{" "}
-            <Link to={`/artists/${artist.slug}`}>
+            <Link to={recordPath("/artists", artist.slug)}>
               {artist.name}
             </Link>
           </p>
@@ -50,7 +51,7 @@ export default function WorkCard({
 
         <TagList tags={tags} />
 
-        <TextLink to={`/works/${slug}`} arrow>
+        <TextLink to={recordPath("/works", slug)} arrow>
           View work
         </TextLink>
       </div>

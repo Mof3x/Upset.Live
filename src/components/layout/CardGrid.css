@@ -1,5 +1,6 @@
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(var(--card-grid-min, 180px), 1fr));
+  /* auto-fill keeps empty tracks, so one or two cards stay card-sized instead of stretching full width */
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-grid-min, 180px), 1fr));
   gap: 1rem;
 }

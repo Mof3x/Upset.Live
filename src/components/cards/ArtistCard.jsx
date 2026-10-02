@@ -4,6 +4,7 @@ import MetaLine from "../ui/MetaLine";
 import TagList from "../ui/TagList";
 import TextLink from "../ui/TextLink";
 import "./ArtistCard.css";
+import { recordPath } from "../../lib/paths";
 
 export default function ArtistCard({
   slug,
@@ -19,7 +20,7 @@ export default function ArtistCard({
   linkLabel = "View artist",
 }) {
   const description = excerpt || (Array.isArray(bio) ? bio[0] : bio);
-  const to = `${basePath}/${slug}`;
+  const to = recordPath(basePath, slug);
 
   return (
     <article className="artist-card">

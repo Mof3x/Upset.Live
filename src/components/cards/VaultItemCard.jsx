@@ -3,6 +3,7 @@ import MediaFrame from "../ui/MediaFrame";
 import MetaLine from "../ui/MetaLine";
 import TextLink from "../ui/TextLink";
 import "./WorkCard.css";
+import { recordPath } from "../../lib/paths";
 
 const statusLabel = { available: "Open", archived: "Archived" };
 
@@ -18,7 +19,7 @@ export default function VaultItemCard({
   artists = [],
   basePath = "/vault",
 }) {
-  const to = `${basePath}/${slug}`;
+  const to = recordPath(basePath, slug);
 
   return (
     <article className="work-card">
@@ -42,7 +43,7 @@ export default function VaultItemCard({
             {artists.map((artist, index) => (
               <span key={artist.slug || index}>
                 {index > 0 && ", "}
-                {artist.slug ? <Link to={`/artists/${artist.slug}`}>{artist.name}</Link> : artist.name}
+                {artist.slug ? <Link to={recordPath("/artists", artist.slug)}>{artist.name}</Link> : artist.name}
               </span>
             ))}
           </p>

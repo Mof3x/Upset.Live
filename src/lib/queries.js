@@ -186,6 +186,7 @@ async function attachWorkRelations(works, options, { related = false } = {}) {
   if (!ids.length) return works;
 
   const byWork = { "filter[work_id][_in]": ids.join(",") };
+  // The gallery (work_files) is only shown on the detail page, so lists don't request it.
   const [credits, files, texts] = await Promise.all([
     junctionRows(
       "work_artists",
@@ -193,7 +194,9 @@ async function attachWorkRelations(works, options, { related = false } = {}) {
       byWork,
       options
     ),
-    junctionRows("work_files", ["work_id", "caption", "order", ...legacyFileFields], byWork, options, "work_files", "order"),
+    related
+      ? junctionRows("work_files", ["work_id", "caption", "order", ...legacyFileFields], byWork, options, "work_files", "order")
+      : Promise.resolve([]),
     related
       ? junctionRows(
           "text_related_works",

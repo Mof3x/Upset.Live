@@ -21,6 +21,7 @@ import { normalizeContributor, normalizeRazzFeature, normalizeRazzIssue } from "
 import { gateStatus, usePageTitle } from "../lib/resourceState";
 import useDirectusResource from "../lib/useDirectusResource";
 import "./CorePages.css";
+import { recordPath } from "../lib/paths";
 
 function contributorLine(contributors) {
   return contributors.map((person) => person.name).join(", ");
@@ -47,7 +48,7 @@ export function RazzPage() {
         <>
           <section className="core-page__list" aria-label="Current issue">
             <EntryCard
-              to={`/razz/issues/${current.slug}`}
+              to={recordPath("/razz/issues", current.slug)}
               title={current.title}
               meta={["Current issue", current.issueNumber && `No. ${current.issueNumber}`, current.date]}
               excerpt={current.excerpt}
@@ -64,7 +65,7 @@ export function RazzPage() {
                 {archive.map((issue) => (
                   <EntryCard
                     key={issue.slug}
-                    to={`/razz/issues/${issue.slug}`}
+                    to={recordPath("/razz/issues", issue.slug)}
                     title={issue.title}
                     meta={[issue.issueNumber && `No. ${issue.issueNumber}`, issue.date]}
                     excerpt={issue.excerpt}
@@ -154,7 +155,7 @@ export function RazzIssuePage() {
             {features.map((feature) => (
               <EntryCard
                 key={feature.slug}
-                to={`/razz/features/${feature.slug}`}
+                to={recordPath("/razz/features", feature.slug)}
                 title={feature.title}
                 meta={[contributorLine(feature.contributors)]}
                 excerpt={feature.excerpt}
@@ -212,7 +213,7 @@ export function RazzFeaturePage() {
             <span key={person.slug}>
               {index > 0 && ", "}
               {person.role ? `${person.role}: ` : ""}
-              <Link to={`/contributors/${person.slug}`}>{person.name}</Link>
+              <Link to={recordPath("/contributors", person.slug)}>{person.name}</Link>
             </span>
           ))}
         </p>
@@ -245,13 +246,13 @@ export function RazzFeaturePage() {
         groups={[
           {
             label: "Contributors",
-            items: feature.contributors.map((person) => ({ to: `/contributors/${person.slug}`, label: person.name })),
+            items: feature.contributors.map((person) => ({ to: recordPath("/contributors", person.slug), label: person.name })),
           },
           {
             label: "More from this issue",
             items: siblings
               .filter((item) => item.slug !== feature.slug)
-              .map((item) => ({ to: `/razz/features/${item.slug}`, label: item.title })),
+              .map((item) => ({ to: recordPath("/razz/features", item.slug), label: item.title })),
           },
         ]}
       />
@@ -333,7 +334,7 @@ export function ContributorPage() {
         groups={[
           {
             label: "Features",
-            items: person.features.map((feature) => ({ to: `/razz/features/${feature.slug}`, label: feature.title })),
+            items: person.features.map((feature) => ({ to: recordPath("/razz/features", feature.slug), label: feature.title })),
           },
         ]}
       />

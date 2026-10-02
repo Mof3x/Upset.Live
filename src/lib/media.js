@@ -13,8 +13,10 @@ export function getMediaUrl(file, options = {}) {
   const fileId = typeof file === "object" ? file.id : file;
   if (!fileId || !getDirectusUrl()) return "";
 
+  // Relative path (no leading slash) so a base with a path, such as the dev proxy's
+  // http://localhost:5173/cms, keeps it: .../cms/assets/<id>.
   const url = new URL(
-    `/assets/${encodeURIComponent(fileId)}`,
+    `assets/${encodeURIComponent(fileId)}`,
     `${getDirectusUrl()}/`
   );
 

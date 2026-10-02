@@ -8,11 +8,15 @@ export default function GlowCanvas({ id, src, ...props }) {
     const canvas = ref.current;
       if (!canvas) return;
   const img = new Image();
+  // CORS request so getImageData can read Directus images (cms.upset.live allows upset.live).
+  img.crossOrigin = "anonymous";
   img.src = src;
 
   const draw = () => {
+    if (!img.naturalWidth) return;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
     const dpr = window.devicePixelRatio || 1;
 
     canvas.width = Math.round(rect.width * dpr);
@@ -34,7 +38,13 @@ export default function GlowCanvas({ id, src, ...props }) {
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, rect.width, rect.height);
 
     // Keep a clean copy so we can reintroduce the original color in the center only.
-    const originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let originalImageData;
+    try {
+      originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    } catch {
+      // The image arrived without CORS headers (tainted canvas): keep the plain image instead of the effect.
+      return;
+    }
 
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;

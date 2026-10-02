@@ -3,6 +3,7 @@ import MetaLine from "../ui/MetaLine";
 import TagList from "../ui/TagList";
 import TextLink from "../ui/TextLink";
 import "./TextCard.css";
+import { recordPath } from "../../lib/paths";
 
 export default function TextCard({
   slug,
@@ -21,12 +22,12 @@ export default function TextCard({
         <MetaLine items={[category || type, date || year]} />
 
         <h3 className="text-card__title">
-          <Link to={`/texts/${slug}`}>{title}</Link>
+          <Link to={recordPath("/texts", slug)}>{title}</Link>
         </h3>
 
         {author?.slug && (
           <p className="text-card__author">
-            By <Link to={`/artists/${author.slug}`}>{author.name}</Link>
+            By <Link to={recordPath("/artists", author.slug)}>{author.name}</Link>
           </p>
         )}
 
@@ -34,7 +35,7 @@ export default function TextCard({
 
         <TagList tags={tags} />
 
-        <TextLink to={`/texts/${slug}`} arrow>
+        <TextLink to={recordPath("/texts", slug)} arrow>
           Read text
         </TextLink>
       </div>

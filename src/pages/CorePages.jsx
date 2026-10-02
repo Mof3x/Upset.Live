@@ -24,6 +24,7 @@ import { normalizeArtist, normalizeText, normalizeWork } from "../lib/normalise"
 import { gateStatus, usePageTitle } from "../lib/resourceState";
 import useDirectusResource from "../lib/useDirectusResource";
 import "./CorePages.css";
+import { recordPath } from "../lib/paths";
 
 // Category filter kept in the URL (?category=...) so filtered views can be linked.
 function useCategoryParam() {
@@ -232,7 +233,7 @@ export function WorkPage() {
               {work.artists.map((artist) => (
                 <li key={artist.slug}>
                   {artist.role ? `${artist.role}: ` : "By "}
-                  <Link to={`/artists/${artist.slug}`}>{artist.name}</Link>
+                  <Link to={recordPath("/artists", artist.slug)}>{artist.name}</Link>
                 </li>
               ))}
             </ul>
@@ -286,11 +287,11 @@ export function WorkPage() {
         groups={[
           {
             label: "Artist",
-            items: work.artists.map((artist) => ({ to: `/artists/${artist.slug}`, label: `Meet ${artist.name}` })),
+            items: work.artists.map((artist) => ({ to: recordPath("/artists", artist.slug), label: `Meet ${artist.name}` })),
           },
           {
             label: "Related texts",
-            items: work.relatedTexts.map((text) => ({ to: `/texts/${text.slug}`, label: `Read ${text.title}` })),
+            items: work.relatedTexts.map((text) => ({ to: recordPath("/texts", text.slug), label: `Read ${text.title}` })),
           },
           {
             label: "Commissions",
@@ -371,7 +372,7 @@ export function TextPage() {
           {text.authors.map((author, index) => (
             <span key={author.slug}>
               {index > 0 && ", "}
-              <Link to={`/artists/${author.slug}`}>{author.name}</Link>
+              <Link to={recordPath("/artists", author.slug)}>{author.name}</Link>
             </span>
           ))}
         </p>
@@ -396,11 +397,11 @@ export function TextPage() {
         groups={[
           {
             label: "Author",
-            items: text.authors.map((author) => ({ to: `/artists/${author.slug}`, label: `Meet ${author.name}` })),
+            items: text.authors.map((author) => ({ to: recordPath("/artists", author.slug), label: `Meet ${author.name}` })),
           },
           {
             label: "Related works",
-            items: text.relatedWorks.map((work) => ({ to: `/works/${work.slug}`, label: `View ${work.title}` })),
+            items: text.relatedWorks.map((work) => ({ to: recordPath("/works", work.slug), label: `View ${work.title}` })),
           },
         ]}
       />

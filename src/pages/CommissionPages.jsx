@@ -11,6 +11,7 @@ import { normalizeWork } from "../lib/normalise";
 import { usePageTitle } from "../lib/resourceState";
 import useDirectusResource from "../lib/useDirectusResource";
 import "./CorePages.css";
+import { recordPath } from "../lib/paths";
 
 // Disciplines from the site plan. Directus commission_types, when the Public
 // role can read them, take precedence; descriptions stay local.
@@ -78,7 +79,7 @@ export function CommissionsPage() {
         {disciplines.map((discipline) => (
           <EntryCard
             key={discipline.slug}
-            to={`/commissions/${discipline.slug}`}
+            to={recordPath("/commissions", discipline.slug)}
             title={discipline.name}
             excerpt={discipline.description}
             linkLabel="Book a commission"

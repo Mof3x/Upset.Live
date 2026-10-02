@@ -15,6 +15,7 @@ import { normalizeJournalEntry } from "../lib/normalise";
 import { gateStatus, usePageTitle } from "../lib/resourceState";
 import useDirectusResource from "../lib/useDirectusResource";
 import "./CorePages.css";
+import { recordPath } from "../lib/paths";
 
 export function JournalPage() {
   usePageTitle("Journal");
@@ -46,7 +47,7 @@ export function JournalPage() {
           {visible.map((entry) => (
             <EntryCard
               key={entry.slug}
-              to={`/journal/${entry.slug}`}
+              to={recordPath("/journal", entry.slug)}
               title={entry.title}
               meta={[entry.category, entry.date]}
               excerpt={entry.excerpt}
@@ -115,7 +116,7 @@ export function JournalPostPage() {
         groups={[
           {
             label: entry.category ? `More ${entry.category.toLowerCase()}` : "More from the journal",
-            items: threads.map((thread) => ({ to: `/journal/${thread.slug}`, label: thread.title })),
+            items: threads.map((thread) => ({ to: recordPath("/journal", thread.slug), label: thread.title })),
           },
         ]}
       />

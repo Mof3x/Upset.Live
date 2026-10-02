@@ -89,6 +89,7 @@ import { getPublishedArtists, getPublishedWorks } from "../lib/queries";
 import { normalizeArtist, normalizeWork } from "../lib/normalise";
 import useDirectusResource from "../lib/useDirectusResource";
 import "./HomePage.css";
+import { recordPath } from "../lib/paths";
 
 function HeroCard({ hero }) {
   return (
@@ -137,7 +138,7 @@ function ArtistCard({ artist }) {
         <p className="eyebrow">Featured artist</p>
         <h3>{artist.name}</h3>
         {artist.excerpt && <p>{artist.excerpt}</p>}
-        <Link className="text-link" to={`/artists/${artist.slug}`}>
+        <Link className="text-link" to={recordPath("/artists", artist.slug)}>
           Meet the artist
         </Link>
       </div>
@@ -287,7 +288,7 @@ export default function HomePage() {
   const featuredWork = featuredRecord && {
     ...featuredRecord,
     eyebrow: "Featured work",
-    href: `/works/${featuredRecord.slug}`,
+    href: recordPath("/works", featuredRecord.slug),
     ctaLabel: "View the work",
     artist: featuredArtist || null,
   };
@@ -296,7 +297,7 @@ export default function HomePage() {
     subtitle: "Art House",
     image: featuredRecord?.image || "",
     imageAlt: featuredRecord?.imageAlt || "",
-    href: featuredRecord ? `/works/${featuredRecord.slug}` : "/works",
+    href: featuredRecord ? recordPath("/works", featuredRecord.slug) : "/works",
     ctaLabel: "Enter the archive",
   };
   const relatedWorks = works
@@ -304,7 +305,7 @@ export default function HomePage() {
     .slice(0, 4)
     .map((work) => ({
       ...work,
-      href: `/works/${work.slug}`,
+      href: recordPath("/works", work.slug),
     }));
   const quote = {
     text: "Blackness is lit, don't let anybody tell you it's not.",
