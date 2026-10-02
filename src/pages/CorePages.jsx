@@ -13,6 +13,8 @@ import MediaFrame from "../components/ui/MediaFrame";
 import Prose from "../components/ui/Prose";
 import TagList from "../components/ui/TagList";
 import TextLink from "../components/ui/TextLink";
+import AudioPlayer from "../components/audio/AudioPlayer";
+import ListenLinks from "../components/audio/ListenLinks";
 import {
   getPublishedArtists,
   getPublishedTextBySlug,
@@ -227,6 +229,10 @@ export function WorkPage() {
           {work.description.map((paragraph, index) => (
             <p key={index}>{paragraph}</p>
           ))}
+
+          {/* Music: each part shows only when the work has it. */}
+          {work.audio && <AudioPlayer track={{ ...work.audio, href: recordPath("/works", work.slug) }} />}
+          <ListenLinks links={work.listenLinks} />
 
           {work.artists.length > 0 && (
             <ul className="core-detail__credits" aria-label="Credits">

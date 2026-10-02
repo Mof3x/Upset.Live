@@ -1,0 +1,207 @@
+/* Handheld player on a work page: translucent shell, LCD screen, bubble buttons. */
+.y2k-device {
+  width: 100%;
+  max-width: 20rem;
+  margin: 1.5rem 0;
+  padding: 1.1rem;
+  border-radius: 28px;
+  background: rgba(120, 200, 255, 0.22);
+  backdrop-filter: blur(6px) saturate(180%);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow:
+    inset 0 0 20px rgba(255, 255, 255, 0.45),
+    inset 0 0 40px rgba(255, 255, 255, 0.2),
+    0 10px 25px rgba(0, 0, 0, 0.4);
+  display: grid;
+  gap: 0.9rem;
+  font-family: "Verdana", sans-serif;
+}
+
+.y2k-device__screen {
+  min-width: 0;
+  padding: 0.8rem 0.9rem;
+  border-radius: 12px;
+  background: #0a0a0a;
+  color: #7affc9;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  box-shadow:
+    inset 0 0 10px #7affc9,
+    inset 0 0 25px rgba(0, 255, 200, 0.35),
+    0 0 10px rgba(0, 255, 200, 0.35);
+}
+
+.y2k-device__screen p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.y2k-device__title {
+  font-weight: bold;
+}
+
+.y2k-device__artist,
+.y2k-device__status {
+  opacity: 0.8;
+}
+
+.y2k-device__time {
+  margin-top: 0.35rem !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.y2k-device__seek {
+  width: 100%;
+  margin: 0;
+  accent-color: #7affc9;
+}
+
+.y2k-device__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.y2k-device__controls button {
+  width: 3.2rem;
+  height: 3.2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: none;
+  color: #111;
+  font: inherit;
+  font-size: 0.8rem;
+  background: radial-gradient(circle at 30% 30%, #ffffff, #d0d0d0);
+  box-shadow:
+    4px 4px 10px rgba(0, 0, 0, 0.25),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.8),
+    inset 2px 2px 5px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: box-shadow 0.1s;
+}
+
+.y2k-device__controls .y2k-device__play {
+  width: 3.9rem;
+  height: 3.9rem;
+}
+
+.y2k-device__controls button:active:not(:disabled) {
+  box-shadow:
+    inset 4px 4px 10px rgba(0, 0, 0, 0.25),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.8);
+}
+
+.y2k-device__controls button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.y2k-device button:focus-visible,
+.y2k-device__seek:focus-visible,
+.now-playing button:focus-visible,
+.now-playing a:focus-visible,
+.listen-links a:focus-visible {
+  outline: 2px solid #dfffeb;
+  outline-offset: 3px;
+}
+
+/* External listening links. */
+.listen-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.listen-links a {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid rgba(223, 255, 235, 0.45);
+  border-radius: 999px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.listen-links a:hover {
+  border-color: #dfffeb;
+}
+
+/* Bar that follows the visitor while a recording plays. It sits outside the CRT wrapper. */
+.now-playing {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 50;
+  width: min(24rem, calc(100vw - 32px));
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid rgba(223, 255, 235, 0.45);
+  border-radius: 16px;
+  background: rgba(10, 10, 10, 0.92);
+  color: #7affc9;
+  font-family: "Verdana", sans-serif;
+  font-size: 0.8rem;
+  box-shadow: 0 0 14px rgba(0, 255, 200, 0.25);
+}
+
+.now-playing__spacer {
+  height: 5rem;
+}
+
+.now-playing__button {
+  width: 2.4rem;
+  height: 2.4rem;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  color: #111;
+  background: radial-gradient(circle at 30% 30%, #ffffff, #d0d0d0);
+  cursor: pointer;
+}
+
+.now-playing__text {
+  min-width: 0;
+  margin: 0;
+  display: grid;
+}
+
+.now-playing__text a {
+  color: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.now-playing__artist {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.75;
+}
+
+.now-playing__time {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.audio-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .y2k-device__controls button {
+    transition: none;
+  }
+}

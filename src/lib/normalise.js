@@ -44,6 +44,44 @@ function galleryFrom(rows, fallbackAlt) {
     .filter((item) => item.url);
 }
 
+// works.audio_file_id: a directus_files id (or an expanded file record).
+function audioFrom(file, title, credits) {
+  const src = getMediaUrl(isRecord(file) ? file.id : file);
+  if (!src) return null;
+  return { src, title, artist: credits.map((credit) => credit.name).join(", ") };
+}
+
+const listenLabels = {
+  bandcamp: "Bandcamp",
+  spotify: "Spotify",
+  apple_music: "Apple Music",
+  soundcloud: "SoundCloud",
+  youtube: "YouTube",
+};
+
+// works.listen_links: a repeater of { platform, url }. Only http(s) addresses
+// are kept, so a stored "javascript:" (or any other scheme) never becomes a link.
+function listenLinksFrom(value) {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set();
+  return value
+    .map((item) => {
+      if (!isRecord(item) || typeof item.url !== "string") return null;
+      let url;
+      try {
+        url = new URL(item.url.trim());
+      } catch {
+        return null;
+      }
+      if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+      const platform = typeof item.platform === "string" ? item.platform.trim() : "";
+      const label =
+        listenLabels[platform] || (platform && platform !== "other" ? platform : url.hostname.replace(/^www\./, ""));
+      return { url: url.toString(), label };
+    })
+    .filter((link) => link && !seen.has(link.url) && seen.add(link.url));
+}
+
 function categoryOf(record) {
   const category = isRecord(record.category_id) ? record.category_id : record.category;
   return {
@@ -148,6 +186,8 @@ export function normalizeWork(record = {}) {
     featured: Boolean(record.featured),
     order: record.order ?? null,
     relatedTexts: relatedRecords(record.text_related_works, "text_id").map(linkSummary),
+    audio: audioFrom(record.audio_file_id, record.title || "Untitled work", credits),
+    listenLinks: listenLinksFrom(record.listen_links),
   };
 }
 

@@ -52,6 +52,11 @@ const workFields = [
   "order",
 ];
 
+// Music fields are read in their own request (attachWorkMusic): if they or
+// their Public permission are missing, the page shows no player instead of
+// losing its main request. Only the work page plays audio.
+const workMusicFields = ["id", "audio_file_id", "listen_links"];
+
 const textFields = [
   "id",
   "slug",
@@ -236,8 +241,20 @@ export async function getPublishedWorks(options = {}) {
 export async function getPublishedWorkBySlug(slug, options = {}) {
   const work = await getItemBySlug("works", slug, collectionOptions(workFields, published, options));
   if (!work) return null;
-  await attachWorkRelations(work, options, { related: true });
+  await Promise.all([attachWorkRelations(work, options, { related: true }), attachWorkMusic(work, options)]);
   return work;
+}
+
+async function attachWorkMusic(work, options) {
+  const [music] = await optional(
+    getCollection(
+      "works",
+      collectionOptions(workMusicFields, { ...published, "filter[id][_eq]": work.id, limit: "1" }, signalOnly(options))
+    ),
+    "work music"
+  );
+  work.audio_file_id = music?.audio_file_id ?? null;
+  work.listen_links = music?.listen_links ?? null;
 }
 
 export async function getPublishedWorksByArtistSlug(artistSlug, options = {}) {
