@@ -42,6 +42,8 @@ The CMS (Directus 12.1.1 on Heroku, Supabase Postgres) is live and holds real co
 
 `media.js` builds asset URLs. Don't add transform params unless Directus asset transforms are confirmed enabled.
 
+`paths.js`: build every record link with `recordPath(base, slug)`, never `` `/works/${slug}` ``. It URL-encodes the slug, because editors can enter slugs with spaces or a trailing space, and browsers strip trailing whitespace from raw hrefs.
+
 **Pages** are grouped by section: `CorePages.jsx` (About, Ethos, Artists, Works, Texts), `JournalPages.jsx`, `RazzPages.jsx` (issues, features, contributors), `VaultPages.jsx` (Vault and Shop), `CommissionPages.jsx`, `FormPages.jsx` (Contact, Newsletter), plus `HomePage.jsx` and `ArtistPage.jsx`. The Ethos page renders the published text with slug `ethos` when one exists. Commission disciplines fall back to the site-plan list when `commission_types` is not readable. No page shows a purchase action: Vault and Shop items offer "Request information" only, per the build plan.
 
 **Components.** `atmosphere/` (visual layer), `cards/` (`WorkCard`, `ArtistCard` with `basePath`, `TextCard`, `EntryCard` for editorial lists, `VaultItemCard`), `rails/RelatedRail` (cross-links), `forms/` (`EnquiryForm` is config-driven with validation and a honeypot; `NewsletterForm`), `layout/` and `ui/`. Each component has a co-located `.css` with global BEM-style class names. Shared page styles live in `pages/CorePages.css`. Note that `HomePage.css` sets `form { justify-self: center }` globally.
@@ -51,4 +53,4 @@ The CMS (Directus 12.1.1 on Heroku, Supabase Postgres) is live and holds real co
 ## Notes
 
 - `HomePage.jsx` starts with a large commented-out previous version. The live implementation begins at the first `import`.
-- `glowcanvas`/`dithercanvas` call `getImageData`, which fails on cross-origin images without CORS. Directus images only get the effect through the dev proxy (same origin) or once CORS is enabled.
+- `glowcanvas`/`dithercanvas` load images with `crossOrigin = "anonymous"`. Directus sends `Access-Control-Allow-Origin` for `https://upset.live` (Heroku `CORS_ORIGIN`), so `getImageData` can read them. They skip drawing until the image has loaded and the canvas has a size, and keep the plain image if a canvas is tainted. A new production origin must be added to `CORS_ORIGIN`, or its images will not load in these canvases.
