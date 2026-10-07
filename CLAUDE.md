@@ -27,6 +27,7 @@ The CMS (Directus 12.1.1 on Heroku, Supabase Postgres) is live and holds real co
 ## Repository layout
 
 - `src/` is the Vite + React 19 + React Router 7 frontend (the app).
+- `docs/` is the developer documentation (architecture, data layer, Directus, deployment, contributing), and `Upset.live/CMS guide/` is the guide for artists and editors. Update both when a change affects what they describe.
 - `Upset.live/` is an Obsidian-style notes vault: site plans, wireframes, Directus schema docs (`Backend/`), progress logs. It is not code. Treat it as design intent, since it can lag behind `src/`. `Backend/db schema.md` is the most reliable reference for table and column names.
 
 ## Architecture
