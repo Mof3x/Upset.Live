@@ -35,7 +35,7 @@ when you say so.
 | Live content on the site | Blocked | CORS off · site not deployed · nothing published (the Public role is now fixed) |
 | Deployment | Broken | Pages source is "branch" (serves raw files); the "Deploy site" workflow fails on the missing `VITE_DIRECTUS_URL`; upset.live shows "Site not found". The deep-link fallback is ready (`0e2d40a`) |
 | Forms | Partly done | Validation, spam trap and success/failure states work. They open a pre-filled email until a server endpoint exists |
-| Commerce | Request-info only | No buy button anywhere. Vault and Shop items offer "Request information" |
+| Commerce | Built, not live (07/10/2026) | Stripe checkout with stock holds on branch `shop-checkout`. Goes live after the Directus package `shop-checkout` (1a Public read on open vault items, 1b Checkout Worker policy), the Worker deploy, Stripe setup and `VITE_CHECKOUT_ENDPOINT`. Until then the site behaves as before (request-info only) |
 | Artist role (Directus) | Mostly done | As last recorded 30/09: S1–S6 passed, S8a report ready, cleanup not authorised |
 | Tests | Script simulation only | `sim\run-sim.ps1` 90/90 for the Directus scripts; no frontend test runner |
 | Security | Resolved | Credentials in public git history were already rotated (confirmed 01/10/2026) |
@@ -47,7 +47,7 @@ when you say so.
   published records. The permissions script keeps exactly those three on their own published-only rules and still blocks
   any other sensitive grant. The site does not request or display them today.
 - **First proof:** one mock test record, published briefly to prove the pipeline end to end, then unpublished.
-- **Commerce:** request-info only for now (still to confirm for the first release).
+- **Commerce (decided 07/10/2026):** Stripe Checkout through a Cloudflare Worker (`workers/checkout`). Editors set a price and a stock count in Directus; the same rule applies in the Shop and the Vault (no price = enquiry only). Price and stock are public on open items. GBP. Fees were compared: Stripe (1.5% + 20p on UK cards) over SumUp (2.5%) and PayPal (2.9% + fixed); Revolut Business (1% + 20p) is cheaper but needs merchant approval and its own address form, so it can be added later.
 
 ## Frontend: what was done
 

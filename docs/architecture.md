@@ -39,9 +39,10 @@ Every route is registered in `src/App.jsx`.
 | `/contributors` | `ContributorsPage` | `RazzPages.jsx` | Razz contributors credited on a published feature |
 | `/contributors/:slug` | `ContributorPage` | `RazzPages.jsx` | Contributor and their features |
 | `/vault` | `VaultPage` | `VaultPages.jsx` | Open (public) Vault items |
-| `/vault/:slug` | `VaultItemPage` | `VaultPages.jsx` | Vault item and a "Request information" form |
+| `/vault/:slug` | `VaultItemPage` | `VaultPages.jsx` | Vault item, a Buy button when it's for sale, and a "Request information" form |
 | `/shop` | `ShopPage` | `VaultPages.jsx` | Vault items in shop categories |
 | `/shop/:slug` | `ShopSlugPage` | `VaultPages.jsx` | A shop category (e.g. `/shop/prints`) or a single item |
+| `/order/complete` | `OrderCompletePage` | `VaultPages.jsx` | Where Stripe returns a buyer after paying |
 | `/commissions` | `CommissionsPage` | `CommissionPages.jsx` | Commission disciplines |
 | `/commissions/:discipline` | `CommissionDisciplinePage` | `CommissionPages.jsx` | One discipline, example works, enquiry form |
 | `/newsletter` | `NewsletterPage` | `FormPages.jsx` | Newsletter signup |
@@ -54,6 +55,12 @@ Notes on specific routes:
   `publications`, `posters`, `apparel`, `music-digital-releases`, `guest-works`, in `VaultPages.jsx`), it renders that
   category; otherwise it looks up a Vault item. The Shop is the subset of open Vault items in those categories. It is
   not a separate collection.
+- **Buying** works the same in the Shop and the Vault. An item shows a Buy button when its status is Available, it has
+  a price and its stock (`inventory`) is at least 1, and the site was built with `VITE_CHECKOUT_ENDPOINT`. A priced item
+  with no stock shows "Sold out"; an item without a price is enquiry-only. Buy asks the checkout Worker
+  (`workers/checkout`) for a Stripe checkout page; the Worker holds one unit while the buyer pays. Stripe returns the
+  buyer to `/order/complete` (it lives under `/order/` because `/shop/:slug` would read "complete" as an item). See
+  [Deployment → Checkout](deployment.md#checkout).
 - **Commissions** use a built-in list of disciplines (`DISCIPLINES` in `CommissionPages.jsx`). If the public can read
   the Directus `commission_types` collection, its names and slugs are used instead, and the descriptions stay local.
 - **Ethos** shows the published Directus text whose slug is `ethos`. Editors change the ethos page by editing that text.
@@ -85,7 +92,7 @@ visitors see on sections the public can't read yet.
 | `atmosphere/` | `Noise` (animated grain, mounted in the shell), `glowcanvas` and `dithercanvas` (image treatments used on the homepage), `edgeDiffuse.js` (shared helper), and `Galaxy`/`Particles` (WebGL; not mounted) |
 | `audio/` | `AudioProvider` (one `<audio>` element for the whole site, mounted in the shell), `AudioPlayer` (the handheld player on a work page), `NowPlaying` (the small bar shown on other pages while a recording plays), `ListenLinks` ("Listen on …" buttons), `player.js` (`useAudioPlayer()`, `formatTime()`) |
 | `cards/` | `WorkCard`, `ArtistCard` (takes `basePath`, so it also renders contributors), `TextCard`, `EntryCard` (journal and other editorial lists), `VaultItemCard` |
-| `forms/` | `EnquiryForm` (config-driven fields, validation, honeypot, sending/sent/error states) and `NewsletterForm` |
+| `forms/` | `EnquiryForm` (config-driven fields, validation, honeypot, sending/sent/error states), `NewsletterForm`, and `BuyButton` (price, Buy, and the checkout error messages) |
 | `layout/` | `SiteShell`, `Navbar`, `Footer`, `CardGrid` (responsive grid; the `min` prop sets the minimum card width), `PageIntro` and `DetailHeader`, `PageState` |
 | `rails/` | `RelatedRail`, a titled list of links to related records |
 | `ui/` | `Prose` (renders paragraph arrays, with a fallback), `MediaFrame` (fixed aspect ratio image frame), `MetaLine`, `TagList`, `TextLink` (internal `Link` or external `<a>` with an optional arrow), `SectionHeading`, `CategoryNav` (filter buttons), `ContentState` |

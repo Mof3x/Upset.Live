@@ -117,6 +117,12 @@ objects.
   `listenLinks` (`[{ url, label }]` from the `listen_links` repeater of `{ platform, url }`). Only `http`/`https`
   addresses are kept, so a stored `javascript:` link never becomes a link. The label is the platform's name, or the
   site's host name for "Other".
+- **Price and stock.** `normalizeVaultItem()` adds `price` (a number, or `null` when empty, zero or not a number;
+  Directus sends numerics as strings such as `"45.00"`), `priceLabel` (`£45.00`), `inventory` (empty counts as 0),
+  `buyable` (status `available`, a price and at least one in stock) and `soldOut` (status `available`, a price, no
+  stock). The same rule applies in the Shop and the Vault. The query must request both fields, and the Public role
+  must be able to read them: a refused field makes the request fall back to `fields=*`, which drops the category and
+  empties the Shop.
 
 ## `useDirectusResource`: loading in components
 
@@ -161,6 +167,18 @@ Forms never write to Directus from the browser.
 - If it isn't set, the form builds a `mailto:` link to `VITE_CONTACT_EMAIL` (default `hello@upset.live`) with the
   answers filled in, and the visitor sends it from their own mail app.
 - Every form has a hidden honeypot field, `company`. A submission that fills it is silently dropped.
+
+## Checkout: `checkout.js`
+
+The browser never talks to Stripe's API or writes to Directus.
+
+- `checkoutEnabled` is true when `VITE_CHECKOUT_ENDPOINT` is set. Without it, no Buy buttons are shown.
+- `startCheckout(slug, from)` POSTs `{ slug, from }` to `<endpoint>/checkout`. `from` (`"shop"` or `"vault"`) only
+  decides where Stripe's "back" link returns to. The Worker answers `{ url }` and the browser goes there, but only if
+  the address starts with `https://checkout.stripe.com/`.
+- Errors come back as `{ error }`: `sold_out` (409), `not_available` (404), `too_many_holds` (429),
+  `payment_unavailable` (502), `server_error` (500). `checkout.js` turns each into a sentence for the visitor;
+  `BuyButton` shows it under the button.
 
 ## Recipe: adding a new content type
 

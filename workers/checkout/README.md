@@ -26,6 +26,7 @@ What editors need to know is in the CMS guide (`Upset.live/CMS guide/For editors
 | `src/index.js` | The Worker. Commented throughout. |
 | `wrangler.toml` | Name, settings (`[vars]`) and the `EVENTS` storage. No secrets. |
 | `.dev.vars.example` | Template for local secrets. Copy to `.dev.vars` (git-ignored). |
+| `test/checkout.sim.mjs` | Offline simulation (fake Directus, Stripe and storage): `node workers/checkout/test/checkout.sim.mjs` from the repo root. Run it after any change. |
 
 Secrets live in Cloudflare (`wrangler secret put`), never in this folder or the repo, which is public:
 

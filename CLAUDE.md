@@ -19,6 +19,7 @@ Copy `.env.example` to `.env.local` and set `VITE_DIRECTUS_URL` (public Directus
 
 - **Dev proxy.** In `npm run dev`, `src/lib/directus.js` sends requests to `/cms/*`, which `vite.config.js` proxies to `VITE_DIRECTUS_URL`. This exists because the live Directus sends no CORS headers. Set `VITE_DIRECTUS_DEV_PROXY=false` to call Directus directly. Production builds always call `VITE_DIRECTUS_URL` directly, so production needs Directus CORS (`CORS_ENABLED`/`CORS_ORIGIN` on the Heroku app) or a same-origin rewrite at the host.
 - **Forms.** `VITE_FORMS_ENDPOINT` (optional) is a server-side endpoint that forms POST JSON to (`<endpoint>/<kind>`). Without it, forms open a pre-filled email to `VITE_CONTACT_EMAIL` (default `hello@upset.live`). Forms must never write to Directus from the browser.
+- **Checkout.** `VITE_CHECKOUT_ENDPOINT` (optional) is the checkout Worker in `workers/checkout` (Cloudflare Worker, no dependencies, see its README). Without it, no Buy buttons are shown. The Worker holds the Stripe keys and a Directus token limited to the "Checkout Worker" policy (read open vault items, update `inventory` only); never move those into a `VITE_*` variable. After changing the Worker, run its offline simulation: `node workers/checkout/test/checkout.sim.mjs` (fakes Directus, Stripe and KV; must end "0 failed").
 
 ## Directus changes
 
@@ -27,6 +28,7 @@ The CMS (Directus 12.1.1 on Heroku, Supabase Postgres) is live and holds real co
 ## Repository layout
 
 - `src/` is the Vite + React 19 + React Router 7 frontend (the app).
+- `workers/checkout/` is the Stripe checkout Worker (deployed separately with `npx wrangler deploy`, not by the Pages workflow). `npm run lint` covers it.
 - `docs/` is the developer documentation (architecture, data layer, Directus, deployment, contributing), and `Upset.live/CMS guide/` is the guide for artists and editors. Update both when a change affects what they describe.
 - `Upset.live/` is an Obsidian-style notes vault: site plans, wireframes, Directus schema docs (`Backend/`), progress logs. It is not code. Treat it as design intent, since it can lag behind `src/`. `Backend/db schema.md` is the most reliable reference for table and column names.
 
@@ -45,9 +47,11 @@ The CMS (Directus 12.1.1 on Heroku, Supabase Postgres) is live and holds real co
 
 `paths.js`: build every record link with `recordPath(base, slug)`, never `` `/works/${slug}` ``. It URL-encodes the slug, because editors can enter slugs with spaces or a trailing space, and browsers strip trailing whitespace from raw hrefs.
 
-**Pages** are grouped by section: `CorePages.jsx` (About, Ethos, Artists, Works, Texts), `JournalPages.jsx`, `RazzPages.jsx` (issues, features, contributors), `VaultPages.jsx` (Vault and Shop), `CommissionPages.jsx`, `FormPages.jsx` (Contact, Newsletter), plus `HomePage.jsx` and `ArtistPage.jsx`. The Ethos page renders the published text with slug `ethos` when one exists. Commission disciplines fall back to the site-plan list when `commission_types` is not readable. No page shows a purchase action: Vault and Shop items offer "Request information" only, per the build plan.
+**Pages** are grouped by section: `CorePages.jsx` (About, Ethos, Artists, Works, Texts), `JournalPages.jsx`, `RazzPages.jsx` (issues, features, contributors), `VaultPages.jsx` (Vault and Shop), `CommissionPages.jsx`, `FormPages.jsx` (Contact, Newsletter), plus `HomePage.jsx` and `ArtistPage.jsx`. The Ethos page renders the published text with slug `ethos` when one exists. Commission disciplines fall back to the site-plan list when `commission_types` is not readable.
 
-**Components.** `atmosphere/` (visual layer), `cards/` (`WorkCard`, `ArtistCard` with `basePath`, `TextCard`, `EntryCard` for editorial lists, `VaultItemCard`), `rails/RelatedRail` (cross-links), `forms/` (`EnquiryForm` is config-driven with validation and a honeypot; `NewsletterForm`), `layout/` and `ui/`. Each component has a co-located `.css` with global BEM-style class names. Shared page styles live in `pages/CorePages.css`. Note that `HomePage.css` sets `form { justify-self: center }` globally.
+**Buying.** Shop and Vault items follow one rule (`normalizeVaultItem`): `buyable` = status `available` + a price + `inventory` > 0; `soldOut` = priced but no stock; no price = enquiry only. `VaultObject` shows `BuyButton` only when `buyable && checkoutEnabled`, and keeps the enquiry form on every open item. `lib/checkout.js` POSTs `{ slug, from }` to the Worker and only follows a `https://checkout.stripe.com/` URL. The Worker reads price and stock itself (the browser's price is never trusted), holds one unit with a compare-and-set update, and releases it on Stripe's `checkout.session.expired` webhook. Stripe returns buyers to `/order/complete` (not under `/shop/`, which would treat it as a slug).
+
+**Components.** `atmosphere/` (visual layer), `cards/` (`WorkCard`, `ArtistCard` with `basePath`, `TextCard`, `EntryCard` for editorial lists, `VaultItemCard`), `rails/RelatedRail` (cross-links), `forms/` (`EnquiryForm` is config-driven with validation and a honeypot; `NewsletterForm`; `BuyButton`), `layout/` and `ui/`. Each component has a co-located `.css` with global BEM-style class names. Shared page styles live in `pages/CorePages.css`. Note that `HomePage.css` sets `form { justify-self: center }` globally.
 
 **Mock data.** `src/mock/*.js` holds leftover mock content. Nothing imports it.
 
