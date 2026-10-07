@@ -26,6 +26,7 @@ const artistFields = [
   "name",
   "slug",
   "discipline",
+  "tags",
   "bio",
   "portrait_file_id",
   "location",
