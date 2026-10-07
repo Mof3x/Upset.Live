@@ -7,28 +7,39 @@
 //
 // It answers two addresses:
 //
-//   POST /checkout        The Buy button calls this with { slug, from }.
-//                         Answers { url } — the Stripe checkout page to send
-//                         the buyer to — or { error } with a 4xx/5xx status.
+//   POST /checkout        The basket page calls this with
+//                         { items: [{ slug, quantity }, ...] }.
+//                         Answers { url, session, expires_at } — the Stripe
+//                         checkout page to send the buyer to, its id, and when it
+//                         (and the hold) runs out — or { error, ... } with a 4xx/5xx.
+//
+//   POST /release         The basket page calls this with { session } to cancel a
+//                         checkout the buyer left unfinished (they came back and
+//                         changed their basket). We ask Stripe to expire it; Stripe
+//                         then sends the usual "expired" webhook, which puts the
+//                         stock back. Answers { released: true | false }.
 //
 //   POST /stripe-webhook  Stripe calls this when something happens to a
 //                         checkout. We only act on "checkout.session.expired"
-//                         (the buyer never paid), which puts the held unit back.
+//                         (the buyer never paid), which puts the held stock back.
 //
 // How stock works (vault_items.inventory in Directus is the stock count):
 //
-//   1. Buy is clicked  -> we take one unit off the stock straight away (a "hold")
-//                         and open a Stripe checkout that lasts about 30 minutes.
-//   2. Buyer pays      -> nothing else to do: the unit is already gone.
-//   3. Buyer gives up  -> after ~30 minutes Stripe tells us the checkout expired,
-//                         and we add the unit back.
+//   1. Checkout is pressed -> for every line in the basket we take its quantity
+//                             off the stock straight away (a "hold") and open
+//                             one Stripe checkout that lasts about 30 minutes.
+//   2. Buyer pays          -> nothing else to do: the units are already gone.
+//   3. Buyer gives up      -> after ~30 minutes Stripe tells us the checkout
+//                             expired, and we add every line's units back.
 //
 // Safety rules this file follows:
 //
-//   - The browser only sends the item's slug. The title, price and stock are
+//   - The browser only sends slugs and quantities. Titles, prices and stock are
 //     read from Directus here, so a visitor can't change what they pay.
 //   - The Directus token used here can only read open vault items and change
 //     their `inventory` number (the "Checkout Worker" policy). Nothing else.
+//   - A basket is all or nothing: if one line can't be held, the lines already
+//     held are given back and the buyer is told which item ran out.
 //   - If something breaks halfway, stock ends up too LOW, never too high. The
 //     site might wrongly say "Sold out", but it can never sell something twice.
 
@@ -36,12 +47,18 @@
 // the extra minute stops Stripe rejecting it if the clocks differ slightly.
 const HOLD_SECONDS = 31 * 60;
 
+// Basket limits. The site uses the same numbers (src/lib/basket.js). They keep
+// one visitor from holding a large share of the stock, and keep the list of
+// holds short enough to store on the Stripe checkout (500 characters).
+const MAX_LINES = 10;
+const MAX_QUANTITY = 10;
+
 // How many times we retry a stock change when someone else changed the same
 // item at the same moment (see adjustInventory).
 const CAS_ATTEMPTS = 3;
 
-// How long we remember a Stripe event we've already handled. Stripe can send
-// the same event more than once, for up to 3 days.
+// How long we remember a Stripe event (and each line of it) we've already
+// handled. Stripe can send the same event more than once, for up to 3 days.
 const EVENT_TTL_SECONDS = 7 * 24 * 60 * 60;
 
 // A Stripe webhook older than this (in seconds) is refused, so an old captured
@@ -59,6 +76,7 @@ export default {
     const { pathname } = new URL(request.url);
     try {
       if (pathname === "/checkout") return await handleCheckout(request, env);
+      if (pathname === "/release") return await handleRelease(request, env);
       if (pathname === "/stripe-webhook") return await handleWebhook(request, env);
       return json({ error: "not_found" }, 404);
     } catch (error) {
@@ -71,7 +89,7 @@ export default {
 };
 
 // ---------------------------------------------------------------------------
-// POST /checkout — start a checkout for one item
+// POST /checkout — start one checkout for a whole basket
 // ---------------------------------------------------------------------------
 
 async function handleCheckout(request, env) {
@@ -80,72 +98,146 @@ async function handleCheckout(request, env) {
   const origin = allowedOrigin(request, env);
   const cors = corsHeaders(request, env);
 
-  // Browsers send an OPTIONS "pre-flight" request first, asking whether the
-  // real POST is allowed. Say yes only to allowed origins.
-  if (request.method === "OPTIONS") {
-    if (!origin) return new Response(null, { status: 403, headers: cors });
-    return new Response(null, {
-      status: 204,
-      headers: {
-        ...cors,
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Max-Age": "86400",
-      },
-    });
-  }
+  if (request.method === "OPTIONS") return preflight(origin, cors);
   if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405, cors);
   if (!origin) return json({ error: "origin_not_allowed" }, 403, cors);
 
-  // Read { slug, from } from the request body.
+  // Read and check the basket: [{ slug, quantity }, ...].
   let body;
   try {
     body = await request.json();
   } catch {
     return json({ error: "bad_request" }, 400, cors);
   }
-  // The slug is used exactly as sent (not trimmed): editors can enter slugs
-  // with spaces, and Directus must match the stored value.
-  const slug = typeof body?.slug === "string" ? body.slug : "";
-  if (!slug || slug.length > SLUG_MAX_LENGTH) return json({ error: "bad_request" }, 400, cors);
-  // `from` only decides where "back" on the Stripe page returns to.
-  const from = body.from === "vault" ? "vault" : "shop";
+  const lines = basketFrom(body);
+  if (!lines) return json({ error: "bad_request" }, 400, cors);
 
   // Stop one visitor from holding lots of stock at once (see underHoldLimit).
   const ip = request.headers.get("CF-Connecting-IP") || "";
   if (!(await underHoldLimit(env, ip))) return json({ error: "too_many_holds" }, 429, cors);
 
-  // Look the item up. It must be open to the public, marked "available",
-  // have a title and a price above zero...
-  const item = await readItem(env, slug);
-  if (!item || !(Number(item.price) > 0) || !item.title) return json({ error: "not_available" }, 404, cors);
-  // ...and have at least one unit in stock.
-  if (!(Number(item.inventory) >= 1)) return json({ error: "sold_out" }, 409, cors);
+  // Look every item up. Each must be open to the public, marked "available",
+  // and have a title and a price above zero.
+  const items = await Promise.all(lines.map((line) => readItem(env, line.slug)));
+  const unavailable = lines
+    .filter((line, index) => !items[index] || !(Number(items[index].price) > 0) || !items[index].title)
+    .map((line) => line.slug);
+  if (unavailable.length) return json({ error: "not_available", unavailable }, 404, cors);
 
-  // Hold one unit: stock goes down by 1 now. If someone else took the last
-  // unit a moment ago, this fails and the buyer is told it's sold out.
-  const hold = await adjustInventory(env, item.id, -1);
-  if (!hold.ok) return json({ error: "sold_out" }, 409, cors);
+  // Each line needs enough stock. `available` tells the basket page how many
+  // are left of every line that is short, so it can offer the rest.
+  const short = {};
+  lines.forEach((line, index) => {
+    const stock = Math.max(0, Math.floor(Number(items[index].inventory) || 0));
+    if (stock < line.quantity) short[line.slug] = stock;
+  });
+  if (Object.keys(short).length) return json({ error: "sold_out", available: short }, 409, cors);
 
-  // Ask Stripe for a checkout page. If Stripe fails, give the unit back
-  // straight away, because no checkout exists that could expire later.
+  // Hold every line. If one fails (someone bought the last ones a moment ago),
+  // give back the lines already held, so the basket is all or nothing.
+  const held = [];
+  try {
+    for (const [index, line] of lines.entries()) {
+      const hold = await adjustInventory(env, items[index].id, -line.quantity);
+      if (!hold.ok) {
+        await releaseAll(env, held);
+        return json({ error: "sold_out", available: { [line.slug]: hold.inventory ?? 0 } }, 409, cors);
+      }
+      held.push({ id: items[index].id, quantity: line.quantity });
+    }
+  } catch (error) {
+    // Directus failed halfway: give back what was held, then report the error.
+    await releaseAll(env, held);
+    throw error;
+  }
+
+  // Ask Stripe for one checkout page for the whole basket. If Stripe fails,
+  // give everything back straight away: no checkout exists that could expire.
   let session;
   try {
-    session = await createStripeSession(env, item, { from, returnOrigin: origin });
+    session = await createStripeSession(env, lines, items, held, origin);
   } catch (error) {
     console.error(error);
-    try {
-      await adjustInventory(env, item.id, 1);
-    } catch (releaseError) {
-      // Couldn't put it back either: stock stays one too low (the safe side).
-      // Fix the number by hand in Directus if this shows up in the logs.
-      console.error("Releasing the hold failed", item.id, releaseError);
-    }
+    await releaseAll(env, held);
     return json({ error: "payment_unavailable" }, 502, cors);
   }
 
   await countHold(env, ip);
-  return json({ url: session.url }, 200, cors);
+  return json({ url: session.url, session: session.id, expires_at: session.expires_at }, 200, cors);
+}
+
+// Browsers send an OPTIONS "pre-flight" request first, asking whether the
+// real POST is allowed. Say yes only to allowed origins.
+function preflight(origin, cors) {
+  if (!origin) return new Response(null, { status: 403, headers: cors });
+  return new Response(null, {
+    status: 204,
+    headers: {
+      ...cors,
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Max-Age": "86400",
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// POST /release — cancel an unfinished checkout so its stock comes back sooner
+// ---------------------------------------------------------------------------
+
+// Only the buyer knows their checkout id (it is in the address of their Stripe
+// page), and Stripe refuses to expire a checkout that was already paid, so this
+// can never undo a sale. The stock itself is put back by the webhook, the one
+// place that releases holds, so it can never be added back twice.
+async function handleRelease(request, env) {
+  const origin = allowedOrigin(request, env);
+  const cors = corsHeaders(request, env);
+  if (request.method === "OPTIONS") return preflight(origin, cors);
+  if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405, cors);
+  if (!origin) return json({ error: "origin_not_allowed" }, 403, cors);
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "bad_request" }, 400, cors);
+  }
+  const session = typeof body?.session === "string" ? body.session : "";
+  if (!/^cs_(test|live)_[A-Za-z0-9]{1,250}$/.test(session)) return json({ error: "bad_request" }, 400, cors);
+
+  return json({ released: await expireStripeSession(env, session) }, 200, cors);
+}
+
+// Turns the request body into a clean list of { slug, quantity }, or null when
+// it isn't a valid basket. The same slug twice is merged into one line.
+function basketFrom(body) {
+  if (!Array.isArray(body?.items) || !body.items.length) return null;
+  const merged = new Map();
+  for (const entry of body.items) {
+    // Slugs are used exactly as sent (not trimmed): editors can enter slugs
+    // with spaces, and Directus must match the stored value.
+    const slug = typeof entry?.slug === "string" ? entry.slug : "";
+    const quantity = entry?.quantity;
+    if (!slug || slug.length > SLUG_MAX_LENGTH) return null;
+    if (!Number.isInteger(quantity) || quantity < 1) return null;
+    merged.set(slug, (merged.get(slug) || 0) + quantity);
+  }
+  if (merged.size > MAX_LINES) return null;
+  const lines = [...merged].map(([slug, quantity]) => ({ slug, quantity }));
+  return lines.every((line) => line.quantity <= MAX_QUANTITY) ? lines : null;
+}
+
+// Puts back every hold in `held`. Used when a basket can't be completed.
+// A failure here is logged and skipped: stock stays too low (the safe side).
+async function releaseAll(env, held) {
+  for (const hold of [...held].reverse()) {
+    try {
+      const release = await adjustInventory(env, hold.id, hold.quantity);
+      if (!release.ok) console.error("Releasing a hold failed", hold.id, release.reason);
+    } catch (error) {
+      console.error("Releasing a hold failed", hold.id, error);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -161,30 +253,48 @@ async function handleWebhook(request, env) {
   if (!valid) return json({ error: "bad_signature" }, 400);
 
   // We only care about abandoned checkouts. Paid ones need no action (the
-  // unit was taken when the checkout started), so every other event is just
+  // units were taken when the checkout started), so every other event is just
   // acknowledged.
   const event = JSON.parse(payload);
   if (event.type !== "checkout.session.expired") return json({ received: true });
 
-  // Stripe may deliver the same event twice. Handling it twice would put two
-  // units back for one checkout, so skip events we've already handled.
+  // Stripe may deliver the same event twice. Handling it twice would put the
+  // stock back twice, so skip events we've already finished.
   const seenKey = `event:${event.id}`;
   if (await env.EVENTS.get(seenKey)) return json({ received: true, duplicate: true });
 
-  // We stored the item's id on the checkout when we created it.
-  const itemId = event.data?.object?.metadata?.vault_item_id;
-  if (itemId) {
-    const release = await adjustInventory(env, itemId, 1);
+  // We stored the basket's holds on the checkout when we created it.
+  for (const hold of holdsFrom(event.data?.object?.metadata?.holds)) {
+    // Each line is remembered on its own once it's back, so if a later line
+    // fails and Stripe retries the event, the earlier lines aren't added twice.
+    const lineKey = `released:${event.id}:${hold.id}`;
+    if (await env.EVENTS.get(lineKey)) continue;
+    const release = await adjustInventory(env, hold.id, hold.quantity);
     // "missing" means the item is no longer open (or was deleted), so there's
     // nothing to put back. Any other failure answers 500, which makes Stripe
     // send the event again later.
     if (!release.ok && release.reason !== "missing") return json({ error: "retry" }, 500);
+    await env.EVENTS.put(lineKey, "1", { expirationTtl: EVENT_TTL_SECONDS });
   }
 
-  // Only remember the event once the unit is back, so a failed attempt gets
-  // retried instead of being skipped.
+  // Only remember the whole event once every line is back.
   await env.EVENTS.put(seenKey, "1", { expirationTtl: EVENT_TTL_SECONDS });
   return json({ received: true });
+}
+
+// The holds are stored on the checkout as "id:quantity,id:quantity".
+// Anything that doesn't look like that is ignored.
+function holdsFrom(value) {
+  if (typeof value !== "string" || !value) return [];
+  return value
+    .split(",")
+    .map((part) => {
+      const index = part.lastIndexOf(":");
+      const id = part.slice(0, index);
+      const quantity = Number(part.slice(index + 1));
+      return index > 0 && Number.isInteger(quantity) && quantity > 0 ? { id, quantity } : null;
+    })
+    .filter(Boolean);
 }
 
 // ---------------------------------------------------------------------------
@@ -238,23 +348,24 @@ async function readInventory(env, id) {
   return value === null || value === undefined ? null : Number(value);
 }
 
-// Changes an item's stock by `delta` (-1 to hold a unit, +1 to put one back).
+// Changes an item's stock by `delta` (negative to hold units, positive to put
+// them back).
 //
 // This is a "compare-and-set": we read the stock (say 1), then tell Directus
-// "set it to 0, but ONLY if it is still 1". If two buyers click at the same
+// "set it to 0, but ONLY if it is still 1". If two buyers check out at the same
 // moment, only one of those updates matches; the other gets nothing back,
 // reads the new value (0) and is told it's sold out. That is what stops two
 // people buying the last unit.
 //
-// Returns { ok: true, inventory } or { ok: false, reason }, where reason is
-// "missing" (item not visible), "sold_out" (would go below 0) or "conflict"
-// (kept losing the race after CAS_ATTEMPTS tries).
+// Returns { ok: true, inventory } or { ok: false, reason, inventory }, where
+// reason is "missing" (item not visible), "sold_out" (would go below 0; then
+// `inventory` is what's left) or "conflict" (kept losing the race).
 async function adjustInventory(env, id, delta) {
   for (let attempt = 0; attempt < CAS_ATTEMPTS; attempt += 1) {
     const current = await readInventory(env, id);
     if (current === undefined) return { ok: false, reason: "missing" };
     const next = (current ?? 0) + delta;
-    if (next < 0) return { ok: false, reason: "sold_out" };
+    if (next < 0) return { ok: false, reason: "sold_out", inventory: Math.max(0, current ?? 0) };
 
     // An empty field has to be matched with _null rather than _eq.
     const match = current === null ? { _null: true } : { _eq: current };
@@ -276,30 +387,36 @@ async function adjustInventory(env, id, delta) {
 // Stripe — creating the checkout page and checking webhook signatures
 // ---------------------------------------------------------------------------
 
-// Creates a Stripe Checkout Session for one unit of `item` and returns it.
+// Creates one Stripe Checkout Session for the whole basket and returns it.
 // Stripe's API takes form-encoded fields (key=value&...), not JSON.
-async function createStripeSession(env, item, { from, returnOrigin }) {
+async function createStripeSession(env, lines, items, held, returnOrigin) {
   if (!env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY is not set");
 
-  const itemPath = `/${from}/${encodeURIComponent(item.slug)}`;
+  const currency = String(env.CURRENCY || "gbp").toLowerCase();
   const params = new URLSearchParams();
   params.set("mode", "payment"); // a one-off payment, not a subscription
   // Cards only (this includes Apple Pay and Google Pay). Bank-debit methods
   // are left out because they can fail days later, after the hold has gone.
   params.append("payment_method_types[]", "card");
 
-  // One line on the receipt: the item's title at its Directus price.
-  // Stripe wants the amount in pence, so £45.00 becomes 4500.
-  params.set("line_items[0][quantity]", "1");
-  params.set("line_items[0][price_data][currency]", String(env.CURRENCY || "gbp").toLowerCase());
-  params.set("line_items[0][price_data][unit_amount]", String(Math.round(Number(item.price) * 100)));
-  params.set("line_items[0][price_data][product_data][name]", item.title);
+  // One receipt line per basket line: the item's title at its Directus price.
+  // Stripe wants amounts in pence, so £45.00 becomes 4500.
+  lines.forEach((line, index) => {
+    const item = items[index];
+    const prefix = `line_items[${index}]`;
+    params.set(`${prefix}[quantity]`, String(line.quantity));
+    params.set(`${prefix}[price_data][currency]`, currency);
+    params.set(`${prefix}[price_data][unit_amount]`, String(Math.round(Number(item.price) * 100)));
+    params.set(`${prefix}[price_data][product_data][name]`, item.title);
+    params.set(`${prefix}[price_data][product_data][metadata][vault_item_id]`, item.id);
+  });
 
-  // Remember which item this is: the webhook reads it back when the checkout
-  // expires, and it shows next to the payment in the Stripe Dashboard.
-  params.set("metadata[vault_item_id]", item.id);
-  params.set("metadata[slug]", item.slug);
-  params.set("payment_intent_data[metadata][vault_item_id]", item.id);
+  // Remember what we held: the webhook reads this back when the checkout
+  // expires. Stripe allows 500 characters per value; MAX_LINES keeps us under.
+  const holds = held.map((hold) => `${hold.id}:${hold.quantity}`).join(",");
+  if (holds.length > 500) throw new Error("The basket's holds don't fit on the checkout");
+  params.set("metadata[holds]", holds);
+  params.set("payment_intent_data[metadata][holds]", holds);
 
   // When the checkout (and so the hold) runs out.
   params.set("expires_at", String(Math.floor(Date.now() / 1000) + HOLD_SECONDS));
@@ -308,11 +425,12 @@ async function createStripeSession(env, item, { from, returnOrigin }) {
   // in by Stripe. returnOrigin is our own (allow-listed) site address, so
   // local testing comes back to localhost and the live site to upset.live.
   params.set("success_url", `${returnOrigin}/order/complete?session_id={CHECKOUT_SESSION_ID}`);
-  params.set("cancel_url", `${returnOrigin}${itemPath}`);
+  params.set("cancel_url", `${returnOrigin}/basket`);
 
-  // Physical items: ask for a delivery address, and add a postage charge if
-  // one is configured. Digital releases skip both.
-  if (!listFrom(env.DIGITAL_CATEGORIES).includes(item.category_id?.slug)) {
+  // Ask for a delivery address (and add postage, if configured) when anything
+  // in the basket is physical. A basket of digital releases skips both.
+  const digital = listFrom(env.DIGITAL_CATEGORIES);
+  if (items.some((item) => !digital.includes(item.category_id?.slug))) {
     listFrom(env.SHIPPING_COUNTRIES || "GB").forEach((country, index) => {
       params.set(`shipping_address_collection[allowed_countries][${index}]`, country.toUpperCase());
     });
@@ -332,6 +450,19 @@ async function createStripeSession(env, item, { from, returnOrigin }) {
     throw new Error(`Stripe session failed with ${response.status}: ${session?.error?.message || "no url"}`);
   }
   return session;
+}
+
+// Asks Stripe to expire an open checkout. true = expired now (Stripe will send
+// the "expired" webhook); false = it was already paid, already expired or unknown.
+async function expireStripeSession(env, id) {
+  if (!env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY is not set");
+  const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${id}/expire`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}` },
+  });
+  if (response.ok) return true;
+  if (response.status === 400 || response.status === 404) return false;
+  throw new Error(`Stripe expire failed with ${response.status}`);
 }
 
 // Checks that a webhook really came from Stripe.
@@ -377,9 +508,9 @@ function timingSafeEqual(a, b) {
 // Abuse limits and small helpers
 // ---------------------------------------------------------------------------
 
-// Every started checkout holds a unit for ~30 minutes, so a script could make
-// the whole shop look sold out just by clicking Buy over and over. We count
-// open holds per IP address (in the EVENTS store) and refuse more than
+// Every started checkout holds stock for ~30 minutes, so a script could make
+// the whole shop look sold out just by checking out over and over. We count
+// open checkouts per IP address (in the EVENTS store) and refuse more than
 // MAX_HOLDS_PER_IP at a time. It's approximate, which is fine for this.
 async function underHoldLimit(env, ip) {
   const limit = Number(env.MAX_HOLDS_PER_IP || 5);
@@ -388,8 +519,8 @@ async function underHoldLimit(env, ip) {
   return count < limit;
 }
 
-// Adds one to this IP address's hold count. The count clears itself once the
-// holds would have expired.
+// Adds one to this IP address's checkout count. The count clears itself once
+// the holds would have expired.
 async function countHold(env, ip) {
   if (!ip || !env.EVENTS) return;
   const key = `holds:${ip}`;

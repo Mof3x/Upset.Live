@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import VaultItemCard from "../components/cards/VaultItemCard";
-import BuyButton from "../components/forms/BuyButton";
+import AddToBasket from "../components/basket/AddToBasket";
 import EnquiryForm from "../components/forms/EnquiryForm";
 import CardGrid from "../components/layout/CardGrid";
 import { DetailHeader, PageIntro } from "../components/layout/PageIntro";
@@ -16,7 +16,8 @@ import { normalizeVaultItem } from "../lib/normalise";
 import { gateStatus, usePageTitle } from "../lib/resourceState";
 import useDirectusResource from "../lib/useDirectusResource";
 import "./CorePages.css";
-import { checkoutEnabled } from "../lib/checkout";
+import { useBasket } from "../lib/basket";
+import { checkoutEnabled, clearPendingCheckout } from "../lib/checkout";
 import { contactEmail } from "../lib/forms";
 import { recordPath } from "../lib/paths";
 
@@ -191,16 +192,9 @@ function VaultObject({ slug, basePath, sectionLabel }) {
           )}
           <Prose className="core-detail__body" paragraphs={item.description} />
           {availability && <p className="core-notice">{availability}</p>}
-          {/* The story comes first; the Buy control sits under it. `from` sends
-              Stripe's "back" link to the section the visitor came from. */}
-          {canBuy && (
-            <BuyButton
-              slug={item.slug}
-              title={item.title}
-              priceLabel={item.priceLabel}
-              from={basePath === "/vault" ? "vault" : "shop"}
-            />
-          )}
+          {/* The story comes first; the basket control sits under it. `section`
+              is where the basket's link back to this item points. */}
+          {canBuy && <AddToBasket item={item} section={basePath === "/vault" ? "vault" : "shop"} />}
         </div>
       </section>
 
@@ -260,11 +254,18 @@ export function VaultItemPage() {
 
 // /order/complete: where Stripe sends a buyer after a successful payment (the
 // success_url set by the checkout Worker). Stripe emails the receipt and the
-// order is in the Stripe Dashboard, so this page only says thank you. The
-// session_id Stripe adds to the address isn't needed here.
+// order is in the Stripe Dashboard, so this page says thank you and empties the
+// basket. The session_id Stripe adds to the address isn't needed here.
 // It lives under /order/ because /shop/:slug would read "complete" as an item.
 export function OrderCompletePage() {
   usePageTitle("Thank you");
+  const { clear } = useBasket();
+
+  // The order is paid: empty the basket and forget the open checkout.
+  useEffect(() => {
+    clear();
+    clearPendingCheckout();
+  }, [clear]);
 
   return (
     <main className="core-page page-content">

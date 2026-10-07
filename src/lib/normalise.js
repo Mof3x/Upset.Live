@@ -286,8 +286,11 @@ export function normalizeContributor(record = {}) {
   };
 }
 
-// Prices are shown in pounds, e.g. 45 -> "£45.00".
+// Prices are shown in pounds, e.g. 45 -> "£45.00". Also used for basket totals.
 const priceFormat = new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" });
+export function formatPrice(amount) {
+  return priceFormat.format(amount);
+}
 
 // Directus sends numeric fields as strings ("45.00"). Anything that isn't a
 // positive number (empty, 0, text) counts as "no price".

@@ -4,12 +4,14 @@ import "vault66-crt-effect/dist/vault66-crt-effect.css";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { AudioProvider } from "../audio/AudioProvider";
+import { BasketProvider } from "../basket/BasketProvider";
 import NowPlaying from "../audio/NowPlaying";
 import "../../index.css";
 
 export default function SiteShell({ children }) {
   return (
     <AudioProvider>
+    <BasketProvider>
     <div className="site-shell">
       <div className="noise-layer">
       <Noise
@@ -45,6 +47,7 @@ export default function SiteShell({ children }) {
       </div>
       <NowPlaying />
     </div>
+    </BasketProvider>
     </AudioProvider>
   )
 }

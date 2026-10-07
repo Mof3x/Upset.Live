@@ -129,3 +129,33 @@ ul.nav-section.right {
     padding: 0.65rem 0;
   }
 }
+/* Top row on phones: the basket link (when the basket has something) and Menu. */
+.nav-bar-top {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-bar-top .nav-toggle {
+  align-self: center;
+}
+
+.nav-basket--mobile {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+@media (min-width: 821px) {
+  .nav-bar-top {
+    display: none;
+  }
+}
+
+@media (max-width: 820px) {
+  /* Inside the menu the basket would repeat the link above it. */
+  .nav-basket-item {
+    display: none;
+  }
+}

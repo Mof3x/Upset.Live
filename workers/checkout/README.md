@@ -6,13 +6,18 @@ it instead.
 
 ## What it does
 
-1. A visitor presses **Buy** on an item page. The site sends the item's slug to `POST /checkout`.
-2. The Worker reads the item from Directus: it must be open to the public, **Available**, priced above zero and have
-   **Inventory** of at least 1. The price always comes from Directus, never from the browser.
-3. It takes one unit off **Inventory** (a "hold") and creates a Stripe checkout that lasts 31 minutes.
+1. A visitor fills a basket and presses **Checkout**. The site sends `POST /checkout` with
+   `{ items: [{ slug, quantity }] }` (up to 10 lines, up to 10 of each).
+2. The Worker reads every item from Directus: each must be open to the public, **Available**, priced above zero and
+   have enough **Inventory**. Prices always come from Directus, never from the browser.
+3. It takes each line's quantity off **Inventory** (a "hold"). If one line can't be held, the others are given back
+   (all or nothing). Then it creates one Stripe checkout for the basket that lasts 31 minutes.
 4. The visitor pays on Stripe's page and comes back to `/order/complete`. Stripe emails the receipt.
-5. If they don't pay, Stripe calls `POST /stripe-webhook` with `checkout.session.expired` and the Worker puts the
-   unit back.
+5. If they don't pay, Stripe calls `POST /stripe-webhook` with `checkout.session.expired` and the Worker puts every
+   line back, once each, even if Stripe sends the event twice.
+6. If they come back to the basket, change it and check out again, the site first calls `POST /release` with the old
+   checkout's id. The Worker asks Stripe to expire it (Stripe refuses for a paid checkout), and step 5 then returns the
+   stock within seconds.
 
 Two people can't buy the last unit: the stock change only applies if nobody changed it in between. If anything
 breaks halfway, stock ends up too low (the site says "Sold out"), never too high.
@@ -67,8 +72,8 @@ Run these from this folder (`workers/checkout`). Use Stripe **test mode** first;
    npx wrangler secret put STRIPE_WEBHOOK_SECRET
    ```
 6. **Website.** In GitHub → the repo → Settings → Secrets and variables → Actions → Variables, add
-   `VITE_CHECKOUT_ENDPOINT` = the Worker address. The next deploy of `main` shows Buy buttons on items that have a
-   price and stock. Without this variable the site shows no Buy buttons at all.
+   `VITE_CHECKOUT_ENDPOINT` = the Worker address. The next deploy of `main` shows "Add to basket" on items that have a
+   price and stock. Without this variable the site shows no basket at all.
 
 ## Settings (`wrangler.toml` → `[vars]`)
 
@@ -93,7 +98,8 @@ The local Worker talks to the **live** Directus (there is only one), so use a te
    `stripe listen --forward-to localhost:8787/stripe-webhook`. Put the `whsec_…` it prints into `.dev.vars` and
    restart `wrangler dev`.
 4. In the site's `.env.local`, set `VITE_CHECKOUT_ENDPOINT=http://localhost:8787`, then `npm run dev`.
-5. Press Buy on the test item: you land on Stripe's test checkout and the item's Inventory drops by 1.
+5. Add the test item to the basket and press Checkout: you land on Stripe's test checkout and the item's Inventory
+   drops by the quantity.
    - Pay with Stripe's test card `4242 4242 4242 4242` (any future date, any CVC): you land on `/order/complete`.
    - Or expire the checkout instead (`stripe checkout sessions expire <cs_test_… id>`): Inventory goes back up.
 

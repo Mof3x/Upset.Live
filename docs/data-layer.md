@@ -168,17 +168,29 @@ Forms never write to Directus from the browser.
   answers filled in, and the visitor sends it from their own mail app.
 - Every form has a hidden honeypot field, `company`. A submission that fills it is silently dropped.
 
+## Basket: `basket.js`
+
+- The basket is kept in the visitor's browser (localStorage key `upset-basket-v1`) by `BasketProvider`, which lives in
+  `SiteShell`. `useBasket()` gives `lines`, `count`, `add`, `setQuantity`, `remove` and `clear`. A change in another tab
+  is followed through the `storage` event. If storage is blocked, the basket works for the visit but isn't saved.
+- A line stores only `slug`, `quantity`, and a `title`, `image` and `section` to show straight away. `cleanLines()`
+  drops anything malformed. Limits: `MAX_LINES` 10 and `MAX_QUANTITY` 10, the same as the Worker.
+- Prices and stock are never taken from the basket: `/basket` loads the open items again and checks each line
+  (unavailable, sold out, fewer left, or fine). The Worker checks a third time.
+
 ## Checkout: `checkout.js`
 
 The browser never talks to Stripe's API or writes to Directus.
 
-- `checkoutEnabled` is true when `VITE_CHECKOUT_ENDPOINT` is set. Without it, no Buy buttons are shown.
-- `startCheckout(slug, from)` POSTs `{ slug, from }` to `<endpoint>/checkout`. `from` (`"shop"` or `"vault"`) only
-  decides where Stripe's "back" link returns to. The Worker answers `{ url }` and the browser goes there, but only if
-  the address starts with `https://checkout.stripe.com/`.
-- Errors come back as `{ error }`: `sold_out` (409), `not_available` (404), `too_many_holds` (429),
-  `payment_unavailable` (502), `server_error` (500). `checkout.js` turns each into a sentence for the visitor;
-  `BuyButton` shows it under the button.
+- `checkoutEnabled` is true when `VITE_CHECKOUT_ENDPOINT` is set. Without it, no basket buttons are shown.
+- `startCheckout(lines)` POSTs `{ items: [{ slug, quantity }] }` to `<endpoint>/checkout`. The Worker answers
+  `{ url, session, expires_at }`; the browser goes to `url`, but only if it starts with `https://checkout.stripe.com/`.
+- The open checkout is remembered (`upset-checkout-pending-v1`) until it expires or the order completes. On `/basket`,
+  an unchanged basket goes back to that payment page; a changed basket first calls `releaseCheckout(session)`
+  (`POST <endpoint>/release`, which asks Stripe to expire it), so the visitor doesn't compete with their own hold.
+- Errors throw a `CheckoutError` with the Worker's code: `sold_out` (409, with `available: { slug: units left }`),
+  `not_available` (404, with `unavailable: [slug]`), `too_many_holds` (429), `payment_unavailable` (502),
+  `server_error` (500), or `network`. The basket page names the items and updates their quantities.
 
 ## Recipe: adding a new content type
 
