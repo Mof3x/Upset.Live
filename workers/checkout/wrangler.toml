@@ -24,4 +24,4 @@ MAX_HOLDS_PER_IP = "5"
 # Create it with `npx wrangler kv namespace create EVENTS` and paste the id here.
 [[kv_namespaces]]
 binding = "EVENTS"
-id = "REPLACE_WITH_EVENTS_NAMESPACE_ID"
+id = "c0e7357f0b144f748c5f6279e53b8617"
