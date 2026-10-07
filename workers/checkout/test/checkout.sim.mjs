@@ -41,9 +41,9 @@ let expireCalls; // ids the Worker asked Stripe to expire
 
 function resetWorld() {
   items = [
-    { id: "i-print", slug: "night-print", title: "Night Print", price: "45.00", inventory: 3, status: "available", vault_classification: "open_public", category_id: { slug: "prints" } },
+    { id: "i-print", slug: "night-print", title: "Night Print", price: "45.00", inventory: 3, image_file_id: "0b5e9d2a-6c1f-4f6e-9a6b-2f1d3c4b5a69", status: "available", vault_classification: "open_public", category_id: { slug: "prints" } },
     { id: "i-oneoff", slug: "Fruits and Goddess ", title: "Fruits and Goddess", price: "150.00", inventory: 1, status: "available", vault_classification: "open_public", category_id: { slug: "originals" } },
-    { id: "i-cents", slug: "cents", title: "Cents", price: "12.34", inventory: 5, status: "available", vault_classification: "open_public", category_id: { slug: "prints" } },
+    { id: "i-cents", slug: "cents", title: "Cents", price: "12.34", inventory: 5, image_file_id: "../../evil", status: "available", vault_classification: "open_public", category_id: { slug: "prints" } },
     { id: "i-digital", slug: "digital-ep", title: "Digital EP", price: "7.00", inventory: 100, status: "available", vault_classification: "open_public", category_id: { slug: "music-digital-releases" } },
     { id: "i-noprice", slug: "no-price", title: "No Price", price: null, inventory: 4, status: "available", vault_classification: "open_public", category_id: { slug: "prints" } },
     { id: "i-zero", slug: "zero-stock", title: "Zero", price: "20.00", inventory: 0, status: "available", vault_classification: "open_public", category_id: { slug: "prints" } },
@@ -73,7 +73,7 @@ function pick(entry, fields) {
   const out = {};
   for (const field of fields) {
     if (field === "category_id.slug") out.category_id = { slug: entry.category_id?.slug };
-    else out[field] = entry[field];
+    else out[field] = entry[field] ?? null;
   }
   return out;
 }
@@ -308,6 +308,7 @@ resetWorld();
   check("Stripe: cancel URL returns to the basket", p.get("cancel_url") === "https://upset.live/basket");
   check("Stripe: asks for a GB delivery address", p.get("shipping_address_collection[allowed_countries][0]") === "GB" && !p.has("shipping_address_collection[allowed_countries][1]"));
   check("Stripe: no shipping rate unless configured", !p.has("shipping_options[0][shipping_rate]"));
+  check("Stripe: the item photo is passed as its public Directus asset", p.get("line_items[0][price_data][product_data][images][0]") === "https://cms.test/assets/0b5e9d2a-6c1f-4f6e-9a6b-2f1d3c4b5a69");
 }
 
 // A mixed basket: print x2, the one-off with an awkward slug, a digital release x3
@@ -334,8 +335,10 @@ resetWorld();
   const env = makeEnv();
   await call(env, { body: basket(["cents"]) });
   check("£12.34 -> 1234 (no float drift)", stripeCalls[0].get("line_items[0][price_data][unit_amount]") === "1234");
+  check("a malformed photo id is never put in the Stripe image address", !stripeCalls[0].has("line_items[0][price_data][product_data][images][0]"));
   await call(env, { body: basket(["digital-ep", 2]) });
   check("digital-only basket: no delivery address, no shipping rate", ![...stripeCalls[1].keys()].some((key) => key.startsWith("shipping")));
+  check("an item without a photo sends no image", ![...stripeCalls[1].keys()].some((key) => key.includes("[images]")));
   const r = await call(env, { body: basket(["cents", 1], ["cents", 2]) });
   check("the same slug twice is merged into one line of 3", r.status === 200 && stripeCalls[2].get("line_items[0][quantity]") === "3" && !stripeCalls[2].has("line_items[1][quantity]") && item("i-cents").inventory === 1);
 }

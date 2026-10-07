@@ -329,7 +329,7 @@ async function readItem(env, slug) {
     "filter[slug][_eq]": slug,
     "filter[vault_classification][_eq]": "open_public",
     "filter[status][_eq]": "available",
-    fields: "id,slug,title,price,inventory,category_id.slug",
+    fields: "id,slug,title,price,inventory,image_file_id,category_id.slug",
     limit: "1",
   });
   const rows = await directus(env, `/items/vault_items?${params}`);
@@ -409,6 +409,12 @@ async function createStripeSession(env, lines, items, held, returnOrigin) {
     params.set(`${prefix}[price_data][unit_amount]`, String(Math.round(Number(item.price) * 100)));
     params.set(`${prefix}[price_data][product_data][name]`, item.title);
     params.set(`${prefix}[price_data][product_data][metadata][vault_item_id]`, item.id);
+    // The item's photo on Stripe's page. Directus serves it publicly at /assets/<id> while the
+    // item is open; only a well-formed file id is used, so nothing else can end up in the address.
+    if (typeof item.image_file_id === "string" && /^[0-9a-f-]{36}$/i.test(item.image_file_id)) {
+      const base = String(env.DIRECTUS_URL || "").replace(/\/$/, "");
+      params.set(`${prefix}[price_data][product_data][images][0]`, `${base}/assets/${item.image_file_id}`);
+    }
   });
 
   // Remember what we held: the webhook reads this back when the checkout

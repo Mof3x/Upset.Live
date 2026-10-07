@@ -302,7 +302,10 @@ function priceFrom(value) {
 export function normalizeVaultItem(record = {}) {
   const category = categoryOf(record);
   const description = bodyToParagraphs(record.description);
-  const gallery = galleryFrom(record.vault_item_files, record.title || "Object image");
+  // The item's photo is vault_items.image_file_id (a directus_files id), served
+  // from /assets like a work's thumbnail. The page shows gallery[0] as its lead image.
+  const photo = getMediaUrl(record.image_file_id);
+  const gallery = photo ? [{ url: photo, alt: getMediaAlt(record.image_file_id, record.title || "Object image"), caption: "" }] : [];
   const editionSize = record.edition_size || null;
   const status = record.status || "";
   const price = priceFrom(record.price);

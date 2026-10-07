@@ -11,7 +11,8 @@ it instead.
 2. The Worker reads every item from Directus: each must be open to the public, **Available**, priced above zero and
    have enough **Inventory**. Prices always come from Directus, never from the browser.
 3. It takes each line's quantity off **Inventory** (a "hold"). If one line can't be held, the others are given back
-   (all or nothing). Then it creates one Stripe checkout for the basket that lasts 31 minutes.
+   (all or nothing). Then it creates one Stripe checkout for the basket that lasts 31 minutes, with each item's
+   photo (`image_file_id`, served publicly by Directus while the item is open) shown on Stripe's page.
 4. The visitor pays on Stripe's page and comes back to `/order/complete`. Stripe emails the receipt.
 5. If they don't pay, Stripe calls `POST /stripe-webhook` with `checkout.session.expired` and the Worker puts every
    line back, once each, even if Stripe sends the event twice.

@@ -65,14 +65,13 @@ ids, and attaches the rows to each parent under the junction's name:
 | Parent | Junction (attached as) | Expands |
 |---|---|---|
 | `works` | `work_artists` | `artist_id.name`, `artist_id.slug`, `role` |
-| `works` (detail only) | `work_files` | the legacy `files` row (`file_id.url`), `caption`, `order` |
+| `works` (detail only) | `work_files` | the legacy `files` row (`file_id.url`), `caption`, `order` (see the note below) |
 | `works` (detail only) | `text_related_works` | `text_id.slug`, `text_id.title`, `note` |
 | `texts` | `text_authors` | `artist_id.name`, `artist_id.slug`, `role` |
 | `texts` | `text_related_works` | `work_id.slug`, `work_id.title`, `note` |
 | `razz_features` | `razz_feature_contributors` | `contributor_id.name`, `contributor_id.slug`, `role` |
 | `razz_features` | `razz_feature_files` | legacy `files` row, `order` |
 | `vault_items` | `vault_item_artists` | `artist_id.name`, `artist_id.slug`, `role` |
-| `vault_items` | `vault_item_files` | legacy `files` row, `caption`, `order` |
 
 Reverse lookups work the same way. An artist's works are found by reading `work_artists` filtered on
 `artist_id.slug`, then loading those work ids with the usual publication filter.
@@ -91,8 +90,13 @@ simply shows no player. Lists don't request them.
 
 | Field | Points at | URL |
 |---|---|---|
-| `*_file_id` on `works`, `artists`, `texts`, `journal`, `razz_issues`, `razz_contributors` (thumbnail, portrait, cover; a work's `audio_file_id` recording) | `directus_files` (the Directus file library) | `<VITE_DIRECTUS_URL>/assets/<id>` |
+| `*_file_id` on `works`, `artists`, `texts`, `journal`, `razz_issues`, `razz_contributors`, `vault_items` (thumbnail, portrait, cover; a work's `audio_file_id` recording; a vault item's `image_file_id` photo) | `directus_files` (the Directus file library) | `<VITE_DIRECTUS_URL>/assets/<id>` |
 | `file_id` on `work_files`, `razz_feature_files`, `vault_item_files` | the legacy `files` table | that row's `url` column |
+
+**The legacy `files` table is empty of addresses.** On the live database (checked 07/10/2026) it has only an `id`
+column: no `url`, no `filename`. Galleries built on `work_files` and `razz_feature_files` therefore stay empty, and
+Vault items no longer read `vault_item_files` at all: their photo is `image_file_id`. A future gallery should use the
+Directus file library too.
 
 `media.js` builds both. `getMediaUrl()` accepts a file id, an expanded file object or a legacy `{ url }`, and supports
 Directus transform parameters (`width`, `quality`, …). **Don't pass transforms** until Directus asset transforms are
