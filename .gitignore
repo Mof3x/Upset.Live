@@ -26,3 +26,7 @@ dist-ssr
 
 # Funding notes (budgets, personal details, strategy). The repo is public.
 Upset.live/Funding/
+
+# Worker secrets for `wrangler dev` (Stripe and Directus keys). The repo is public.
+.dev.vars
+.wrangler/

@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VITE_DIRECTUS_URL: ${{ vars.VITE_DIRECTUS_URL }}
+      # Optional: the checkout Worker's address. Empty = no Buy buttons on the site.
+      VITE_CHECKOUT_ENDPOINT: ${{ vars.VITE_CHECKOUT_ENDPOINT }}
 
     steps:
       - name: Checkout

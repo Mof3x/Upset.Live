@@ -15,11 +15,15 @@ export default function VaultItemCard({
   category,
   edition,
   status,
+  priceLabel,
+  soldOut,
   excerpt,
   artists = [],
   basePath = "/vault",
 }) {
   const to = recordPath(basePath, slug);
+  // The last item on the meta line: "Sold out" or "Archived" first, then the price, then "Open".
+  const availability = soldOut ? "Sold out" : status === "archived" ? statusLabel.archived : priceLabel || statusLabel[status];
 
   return (
     <article className="work-card">
@@ -32,7 +36,7 @@ export default function VaultItemCard({
       )}
 
       <div className="work-card__body">
-        <MetaLine items={[category, edition, statusLabel[status]]} />
+        <MetaLine items={[category, edition, availability]} />
 
         <h3 className="work-card__title">
           <Link to={to}>{title}</Link>

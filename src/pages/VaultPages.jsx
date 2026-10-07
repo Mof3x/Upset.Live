@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import VaultItemCard from "../components/cards/VaultItemCard";
+import BuyButton from "../components/forms/BuyButton";
 import EnquiryForm from "../components/forms/EnquiryForm";
 import CardGrid from "../components/layout/CardGrid";
 import { DetailHeader, PageIntro } from "../components/layout/PageIntro";
@@ -15,6 +16,8 @@ import { normalizeVaultItem } from "../lib/normalise";
 import { gateStatus, usePageTitle } from "../lib/resourceState";
 import useDirectusResource from "../lib/useDirectusResource";
 import "./CorePages.css";
+import { checkoutEnabled } from "../lib/checkout";
+import { contactEmail } from "../lib/forms";
 import { recordPath } from "../lib/paths";
 
 // Only open_public items that are not private are ever requested (see queries.js).
@@ -35,10 +38,23 @@ function nameFromSlug(slug) {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-function availabilityLabel(status) {
-  if (status === "available") return "Open for enquiries";
-  if (status === "archived") return "Archived";
+// The short availability line on an item page. `canBuy` is true when the item
+// is buyable AND checkout is switched on (VITE_CHECKOUT_ENDPOINT is set).
+function availabilityLabel(item, canBuy) {
+  if (item.soldOut) return "Sold out";
+  if (canBuy) return "Available";
+  if (item.status === "available") return "Open for enquiries";
+  if (item.status === "archived") return "Archived";
   return "";
+}
+
+// The sentence above the enquiry form, matched to whether the item can be bought.
+function enquiryIntro(item, canBuy) {
+  if (item.soldOut) {
+    return "This has sold out. Ask us about future editions, or whether one may come back. We reply personally.";
+  }
+  if (canBuy) return "Want to know more before you buy? Ask about provenance, sizing or shipping. We reply personally.";
+  return "Tell us what you would like to know about this edition: provenance, availability or shipping. We reply personally.";
 }
 
 function ItemGrid({ items, basePath }) {
@@ -142,10 +158,16 @@ function VaultObject({ slug, basePath, sectionLabel }) {
   }
 
   const [lead, ...rest] = item.gallery;
+  // Show the Buy button only when the item can be sold (price + stock, see
+  // normalizeVaultItem) and the checkout Worker is configured.
+  const canBuy = item.buyable && checkoutEnabled;
+  const availability = availabilityLabel(item, canBuy);
+  // When buying isn't possible, the price (if any) goes in the header line instead.
+  const headerPrice = !canBuy && !item.soldOut ? item.priceLabel : "";
 
   return (
     <main className="core-detail page-content">
-      <DetailHeader eyebrow={sectionLabel} title={item.title} items={[item.category, item.edition]} />
+      <DetailHeader eyebrow={sectionLabel} title={item.title} items={[item.category, item.edition, headerPrice]} />
 
       <section className="core-detail__grid">
         {lead ? (
@@ -168,7 +190,17 @@ function VaultObject({ slug, basePath, sectionLabel }) {
             </ul>
           )}
           <Prose className="core-detail__body" paragraphs={item.description} />
-          {availabilityLabel(item.status) && <p className="core-notice">{availabilityLabel(item.status)}</p>}
+          {availability && <p className="core-notice">{availability}</p>}
+          {/* The story comes first; the Buy control sits under it. `from` sends
+              Stripe's "back" link to the section the visitor came from. */}
+          {canBuy && (
+            <BuyButton
+              slug={item.slug}
+              title={item.title}
+              priceLabel={item.priceLabel}
+              from={basePath === "/vault" ? "vault" : "shop"}
+            />
+          )}
         </div>
       </section>
 
@@ -189,17 +221,15 @@ function VaultObject({ slug, basePath, sectionLabel }) {
         </section>
       )}
 
+      {/* The enquiry form stays on every open item, including buyable and sold-out ones. */}
       {item.status !== "archived" && (
         <section className="core-section" aria-labelledby="request-info">
-          <h2 id="request-info">Request information</h2>
-          <p className="core-notice">
-            Tell us what you would like to know about this edition: provenance, availability or
-            shipping. We reply personally.
-          </p>
+          <h2 id="request-info">{canBuy ? "Questions" : "Request information"}</h2>
+          <p className="core-notice">{enquiryIntro(item, canBuy)}</p>
           <EnquiryForm
             kind="vault-request"
             subject={`Vault enquiry: ${item.title}`}
-            submitLabel="Request information"
+            submitLabel={canBuy ? "Send question" : "Request information"}
             initialValues={{ message: `I would like to know more about "${item.title}".` }}
             fields={[
               { name: "name", label: "Name", required: true, autoComplete: "name" },
@@ -226,6 +256,40 @@ function VaultObject({ slug, basePath, sectionLabel }) {
 export function VaultItemPage() {
   const { slug } = useParams();
   return <VaultObject slug={slug} basePath="/vault" sectionLabel="Vault" />;
+}
+
+// /order/complete: where Stripe sends a buyer after a successful payment (the
+// success_url set by the checkout Worker). Stripe emails the receipt and the
+// order is in the Stripe Dashboard, so this page only says thank you. The
+// session_id Stripe adds to the address isn't needed here.
+// It lives under /order/ because /shop/:slug would read "complete" as an item.
+export function OrderCompletePage() {
+  usePageTitle("Thank you");
+
+  return (
+    <main className="core-page page-content">
+      <PageIntro
+        eyebrow="Order received"
+        title="Thank you"
+        description="Your payment went through. Stripe is emailing your receipt, and we will be in touch about delivery."
+      />
+      <p className="core-notice">
+        Questions about your order? Write to {contactEmail} and include the name on your receipt.
+      </p>
+      <RelatedRail
+        title="Keep exploring"
+        groups={[
+          {
+            label: "Collections",
+            items: [
+              { to: "/shop", label: "Back to the Shop" },
+              { to: "/vault", label: "Back to the Vault" },
+            ],
+          },
+        ]}
+      />
+    </main>
+  );
 }
 
 // /shop/:slug is either a shop category (e.g. /shop/prints) or a shop item.

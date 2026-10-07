@@ -286,11 +286,25 @@ export function normalizeContributor(record = {}) {
   };
 }
 
+// Prices are shown in pounds, e.g. 45 -> "£45.00".
+const priceFormat = new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" });
+
+// Directus sends numeric fields as strings ("45.00"). Anything that isn't a
+// positive number (empty, 0, text) counts as "no price".
+function priceFrom(value) {
+  const price = Number(value);
+  return value !== null && value !== "" && Number.isFinite(price) && price > 0 ? price : null;
+}
+
 export function normalizeVaultItem(record = {}) {
   const category = categoryOf(record);
   const description = bodyToParagraphs(record.description);
   const gallery = galleryFrom(record.vault_item_files, record.title || "Object image");
   const editionSize = record.edition_size || null;
+  const status = record.status || "";
+  const price = priceFrom(record.price);
+  // An empty stock field counts as 0, so a priced item is never on sale by accident.
+  const inventory = Math.max(0, Math.floor(Number(record.inventory) || 0));
 
   return {
     id: record.id,
@@ -304,7 +318,16 @@ export function normalizeVaultItem(record = {}) {
     imageAlt: gallery[0]?.alt || record.title || "Object image",
     gallery,
     artists: relatedRecords(record.vault_item_artists, "artist_id").map(personSummary),
-    status: record.status || "",
+    status,
+    price,
+    priceLabel: price ? priceFormat.format(price) : "",
+    inventory,
+    // The rule for selling, the same in the Shop and the Vault:
+    // - buyable: marked available, has a price and at least one in stock.
+    // - soldOut: has a price but no stock (including a unit held at checkout).
+    // - no price: enquiry only, which is how a Vault piece stays off sale.
+    buyable: status === "available" && price !== null && inventory > 0,
+    soldOut: status === "available" && price !== null && inventory === 0,
     edition: [
       record.edition_number ? `No. ${record.edition_number}` : "",
       editionSize ? `Edition of ${editionSize}` : "",

@@ -97,6 +97,9 @@ const razzFeatureFields = ["id", "slug", "title", "body", "issue_id"];
 
 const contributorFields = ["id", "slug", "name", "bio", "portrait_file_id"];
 
+// `price` and `inventory` decide whether an item shows a Buy button or "Sold out"
+// (see normalizeVaultItem). The Public role must be able to read both: a refused
+// field makes the request fall back to `fields=*`, which drops the category.
 const vaultItemFields = [
   "id",
   "slug",
@@ -105,6 +108,8 @@ const vaultItemFields = [
   "status",
   "edition_number",
   "edition_size",
+  "price",
+  "inventory",
   "category_id.name",
   "category_id.slug",
 ];
