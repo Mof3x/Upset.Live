@@ -92,23 +92,17 @@ html, body {
 }
 
 /*
-  CRT layer order. vault66-crt-effect draws its sweep line, edge glow (the vignette) and scanlines at
-  z-index 99 over the whole page. The order is set here explicitly:
-    edge glow / sweep line (99)  <  media (100)  <  scanlines (101)
-  So the vignette never darkens the artwork, but the faint scanlines still run over everything.
-  .media-frame isolates its own stacking context, so the frame itself is lifted, not just the image
-  inside it. :where() keeps the specificity at zero, so a component that positions its media explicitly
-  (for example position: absolute) still wins. Nothing between .crt-inner and the media may set a
-  z-index (see .page-content in HomePage.css), or the media is trapped under the overlays again.
+  Keep the CRT overlays off the artwork. vault66-crt-effect draws its sweep line and edge glow
+  (the vignette) at z-index 99 over the whole page. Its scanlines are turned off in SiteShell.
+  Media is lifted to 100, above them. .media-frame isolates its own stacking context, so the frame
+  itself is lifted, not just the image inside it. :where() keeps the specificity at zero, so a component
+  that positions its media explicitly (for example position: absolute) still wins. Nothing between
+  .crt-inner and the media may set a z-index (see .page-content in HomePage.css), or the media is
+  trapped under the overlays again.
 */
 :where(.crt-inner) :where(.media-frame, img, canvas, video) {
   position: relative;
   z-index: 100;
-}
-
-/* .crt-wrap prefix: index.css loads before the library's CSS, so equal specificity would lose. */
-.crt-wrap .crt-effect-wrapper.scanlines-on::after {
-  z-index: 101;
 }
 
 

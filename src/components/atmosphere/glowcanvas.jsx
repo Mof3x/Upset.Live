@@ -118,13 +118,7 @@ export default function GlowCanvas({ id, src, className = "", ...props }) {
       ctx.filter = "none";
       ctx.globalCompositeOperation = "source-over";
 
-      // scanlines
-      ctx.fillStyle = "rgba(0,0,0,0.07)"; // faint scanlines
-      for (let y = 0; y < canvas.height; y += 3) {
-        ctx.fillRect(0, y, canvas.width, 1);
-      }
-
-      // Add the reusable CRT-style edge diffusion after the main image and scanlines are drawn.
+      // Add the reusable CRT-style edge diffusion after the main image is drawn.
       applyEdgeDiffuseOverlay(canvas, 0.15);
 
       // Build a final pass that restores the source color in the center like an inner border.

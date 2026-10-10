@@ -27,10 +27,8 @@ export default function SiteShell({ children }) {
           enabled
           sweepDuration={10}
           sweepThickness={10}
-          scanlineOpacity={0.15}
           theme="custom"
-          scanlineColor="#dfffeb"
-          enableScanlines
+          enableScanlines={false}
           enableSweep
           enableGlow
           glowColor="#201a1a"
