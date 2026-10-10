@@ -7,21 +7,21 @@
 .core-page__intro,
 .core-detail__header {
   max-width: 60rem;
-  margin-bottom: clamp(3rem, 8vw, 6rem);
+  margin: 0 auto clamp(3rem, 8vw, 6rem);
 }
 
 .core-page__intro h1,
 .core-detail__header h1 {
   max-width: 12ch;
-  margin: 0.25rem 0 1.25rem;
+  margin: 0.25rem auto 1.25rem;
   font-size: clamp(3.5rem, 10vw, 8rem);
   line-height: 0.88;
-  text-align: left;
+  text-align: center;
 }
 
 .core-page__intro > p:last-child {
   max-width: 38rem;
-  margin: 0;
+  margin: 0 auto;
   font-size: 1.25rem;
   line-height: 1.45;
 }
@@ -130,7 +130,7 @@
 .related-content h2 {
   margin: 0;
   font-size: clamp(1.5rem, 3vw, 2.5rem);
-  text-align: left;
+  text-align: center;
 }
 
 .related-content__links {
@@ -212,7 +212,7 @@
 .core-section > h2 {
   margin: 0;
   font-size: clamp(1.5rem, 3vw, 2.5rem);
-  text-align: left;
+  text-align: center;
 }
 
 .core-detail__byline {

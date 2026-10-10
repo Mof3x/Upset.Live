@@ -27,7 +27,7 @@ export default function SiteShell({ children }) {
           enabled
           sweepDuration={10}
           sweepThickness={10}
-          scanlineOpacity={0.3}
+          scanlineOpacity={0.15}
           theme="custom"
           scanlineColor="#dfffeb"
           enableScanlines
@@ -35,8 +35,8 @@ export default function SiteShell({ children }) {
           enableGlow
           glowColor="#201a1a"
           enableEdgeGlow
-          edgeGlowColor="rgba(220, 224, 223, 0.9)"
-          edgeGlowSize={60}
+          edgeGlowColor="rgba(220, 224, 223, 0.3)"
+          edgeGlowSize={28}
           enableFlicker={false}
           enableFilter={false}
         >

@@ -6,8 +6,9 @@
 .page-content {
   width: min(100% - 1rem, 1200px);
   margin-inline: auto;
+  /* No z-index here: one would make a stacking context that traps the page's images under the CRT
+     overlays (z-index 99). index.css lifts media above them instead. */
   position: relative;
-  z-index: 1;
 }
 
 header {

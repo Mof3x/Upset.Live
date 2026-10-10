@@ -117,7 +117,12 @@ input; only state changes (loading, playing, paused, "could not be loaded") are 
 ## Visual effects
 
 - **Noise** repaints a grain texture on a canvas at a fixed interval, behind the whole site.
-- **CRT overlay** comes from `vault66-crt-effect`, configured in `SiteShell.jsx` (colours, sweep speed, glow).
+- **CRT overlay** comes from `vault66-crt-effect`, configured in `SiteShell.jsx` (colours, sweep speed, glow). Since
+  10/10/2026 the scanlines are at `scanlineOpacity` 0.15 (half the original) and the edge glow (the vignette) is 28px at
+  30% opacity. `index.css` sets the layer order: edge glow and sweep line (99), then media (100), then scanlines (101).
+  So the vignette never covers artwork, but the faint scanlines still run over everything. Don't give any wrapper
+  between `.crt-inner` and an image a `z-index`, or the image is trapped under the overlays again (this is why
+  `.page-content` has none).
 - **GlowCanvas** and **DitherCanvas** redraw an image on a canvas with glow, grayscale, scanlines, edge diffusion and a
   green Bayer dither. They load images with `crossOrigin = "anonymous"` and read pixels with `getImageData`, which
   only works because Directus sends `Access-Control-Allow-Origin` for `https://upset.live`. They skip drawing until the

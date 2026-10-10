@@ -106,7 +106,7 @@ export default function DitherCanvas({ id, src, className = "", ...props }) {
 
       ctx.putImageData(imageData, 0, 0);
 
-      ctx.fillStyle = "rgba(17, 9, 9, 0.25)";
+      ctx.fillStyle = "rgba(17, 9, 9, 0.08)"; // faint scanlines
       for (let y = 0; y < canvas.height; y += 3) {
         ctx.fillRect(0, y, canvas.width, 1);
       }
