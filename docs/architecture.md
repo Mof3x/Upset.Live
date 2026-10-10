@@ -10,7 +10,7 @@ browser reads content straight from the Directus API (see [Data layer](data-laye
    `ScrollToTop` component scrolls to the top on every path change.
 3. `src/components/layout/SiteShell.jsx` renders the persistent atmosphere and frame:
    - a `Noise` canvas layer behind everything;
-   - the `vault66-crt-effect` CRT overlay (scanlines, sweep, glow, edge glow);
+   - the `vault66-crt-effect` CRT overlay (sweep line, glow, edge glow; its scanlines are turned off);
    - `Navbar`, the routed page inside `<main class="site-content">`, and `Footer`.
 
 The shell stays mounted while you move between pages. Always navigate with React Router's `<Link>` (or `TextLink`):
