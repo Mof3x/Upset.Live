@@ -155,6 +155,14 @@ quote {
   gap: 1rem;
 }
 
+/* Related-work canvases need their own size: without one, a canvas's box follows its pixel size
+   and the redraw loop grows it on high-density (mobile) screens. Overrides .GlowCanvas's 3 / 1. */
+.related-works-grid .work-card__image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+}
+
 form {
   justify-self: center;
 }

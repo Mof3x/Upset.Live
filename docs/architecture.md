@@ -123,6 +123,12 @@ input; only state changes (loading, playing, paused, "could not be loaded") are 
   only works because Directus sends `Access-Control-Allow-Origin` for `https://upset.live`. They skip drawing until the
   image has loaded and the canvas has a size, and if the canvas is tainted they leave the plain image showing. A new
   production origin must be added to the Directus `CORS_ORIGIN` setting, or these effects fall back to plain images.
+- **Give every effect canvas a CSS size** (`width: 100%` plus an `aspect-ratio`, or a fixed height). Each redraw sets
+  the canvas's pixel size to its box × `devicePixelRatio`. A canvas with no CSS size takes its box from those pixels,
+  so on phones (ratio 2–3) it grew on every redraw and froze the page (the homepage related works, fixed 10/10/2026).
+  The components now keep their base class (`GlowCanvas`/`DitherCanvas`) when you pass a `className`, skip redraws when
+  the size hasn't changed, and pin an unsized canvas at its first size instead of letting it grow. But style new
+  canvases explicitly.
 
 These are presentation only. Keep content, routing and data out of the effect components.
 
