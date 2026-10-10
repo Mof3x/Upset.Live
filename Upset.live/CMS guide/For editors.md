@@ -3,7 +3,7 @@
 How to review, link and publish content, and look after each part of the site. Read the [CMS guide](CMS%20guide.md)
 first. The [Content reference](Content%20reference.md) lists every field.
 
-*Last checked: 2 October 2026.*
+*Last updated: 7 October 2026 (artist set-up, music). The artist set-up hasn't been tried from an artist's account yet.*
 
 ---
 
@@ -21,11 +21,12 @@ first. The [Content reference](Content%20reference.md) lists every field.
 Before you switch **Is Published** on, check:
 
 - [ ] **Title** is spelled correctly.
-- [ ] **Slug** is lowercase-hyphen, has no spaces (check for a trailing space), and is unique. Fix it *now*; once
-  published, it shouldn't change.
+- [ ] **Slug** reads well and is unique. Directus tidies a slug into lowercase-hyphen form whenever it's saved, and
+  fills an empty one from the title on a new record. Fix it *now*; once published, it shouldn't change.
 - [ ] **Text** reads well as plain paragraphs, with no leftover formatting.
 - [ ] **Image** is set, the right way up, and not huge.
-- [ ] **Links**: the artist credit (Work Artists) or author (Text Authors) exists.
+- [ ] **Links**: the artist credit (Work Artists) or author (Text Authors) exists. Works and texts that artists create
+  are credited to them automatically; add any other people.
 - [ ] **The linked artist is published too**, or the credit won't show.
 - [ ] Nothing private is in a public field. On published records, a work's **price** and an artist's **year of birth**
   and **collective member** flag can be read through the API, even though the site doesn't display them.
@@ -39,7 +40,10 @@ it can be undone.
 ## Linking records
 
 Works and texts don't have "artists" or "authors" fields. Each link is its own small record in a separate collection.
-After creating a work or text, create its links.
+
+- When an **artist** creates a work or a text, it's credited to them automatically (one Work Artists or Text Authors
+  record pointing at their own artist profile). Add credits for anyone else.
+- When **you** create a work or a text, nothing is credited automatically: create its links as below.
 
 ### Credit an artist on a work
 
@@ -130,25 +134,51 @@ once credited on a published feature.
 
 ## Vault and Shop
 
-*Not yet open to the public. These pages show "not open yet" until an admin opens them.*
-
-The Vault holds objects and editions. The **Shop** is the public part of the Vault in shop categories (`prints`,
-`publications`, `posters`, `apparel`, `music-digital-releases`, `guest-works`). Vault items have no Is Published
-switch. Two fields decide visibility instead:
+The Vault holds objects and editions. The **Shop** is the public part of the Vault in shop categories (Prints,
+Publications, Posters, Apparel, Music and digital releases, Guest works). Vault items have no Is Published switch.
+**Classification** and **Status** (both dropdowns) decide whether an item is shown:
 
 | Classification | Status | Visible on the site? |
 |---|---|---|
-| `open_public` | `available` | Yes, marked "Open for enquiries" |
-| `open_public` | `archived` | Yes, marked "Archived" |
-| `open_public` | `private` | No |
-| `closed_collective` | anything | No, never |
+| Open | Available | Yes |
+| Open | Archived | Yes, marked "Archived", not for sale |
+| Open | Private | No |
+| Closed (collective only) | anything | No, never |
 
-Rules:
+### Selling an item
 
-- A `closed_collective` item may only be credited to artists marked as collective members. Directus refuses the save
-  otherwise. That's intended.
-- **Notes**, **location**, **inventory**, **price** and **provenance** are internal.
-- There's no buy button anywhere. Visitors use "Request information", which arrives in hello@upset.live.
+An item can be bought when it is **Open**, **Available**, has a **Price** and has **Inventory** of 1 or more.
+Visitors add it to their basket and pay by card on Stripe's secure page. Nothing needs setting up in Stripe for each
+item: the price comes from Directus.
+
+| You set | Visitors see |
+|---|---|
+| Price and Inventory 1 or more | The price, "Add to basket", and "Only 3 left" or "One available" when few remain |
+| Price, Inventory 0 (or empty) | "Sold out" |
+| No price | No basket button, only "Request information" |
+
+- **Price** is in pounds, e.g. `45.00`. Leave it empty to keep a piece enquiry-only. For postage, either include it in
+  the price or ask an admin to add a Stripe shipping rate.
+- **Inventory** is how many you have to sell (1 for a one-off). It goes down by itself when someone checks out. While a
+  buyer is on the payment page, their items are held for up to 30 minutes and then come back if they don't pay.
+- **Restocking**: type the new total into Inventory. A held item that later comes back is added on top, so restock
+  when nobody is mid-checkout if you can.
+- **Photo**: upload it in the item's **Photo** field (JPG or PNG). It is shown on the item, in the basket and on the
+  payment page. Visitors can only load it while the item is Open and not Private.
+- **Orders**: each sale arrives as an email from Stripe, and is listed in the Stripe Dashboard under **Payments** with
+  the buyer's delivery address. Post the item from there.
+- **Refunds** are made in the Stripe Dashboard. A refund doesn't put the item back in stock: raise **Inventory** by
+  hand if it is for sale again.
+- Every open item keeps a "Request information" form for questions; those arrive in hello@upset.live.
+
+### Rules
+
+- A Closed item may only be credited to artists marked as collective members. Directus refuses the save otherwise.
+  That's intended.
+- **Notes**, **location** and **provenance** are internal. **Price** and **inventory** are public on Open items (they
+  drive the price and "Sold out"), so don't use them for anything private.
+- Credit artists in **Vault Item Artists** (item and artist dropdowns). A credit shows only once the artist is
+  published.
 
 ## Commission requests
 
@@ -163,8 +193,18 @@ Enter full addresses starting with `https://`. Edit the existing row; don't crea
 
 ## Artists and accounts
 
-- New artist: an **admin** invites them with the Artist role and links their login to their artist profile (the
-  profile's owner). Until that's done, they can't edit their profile.
+- **New artist:** an **admin** invites them with the Artist role. An unpublished artist record owned by them is created
+  automatically, named "New artist" until they fill in their profile.
+- **Profiles sync from the artist's own user profile.** Name (first + last), Avatar → Portrait, Location, Title →
+  Discipline, Description → Bio and Tags are copied onto the artist record whenever the profile is saved. Only filled-in
+  values are copied, so an empty profile field never blanks the record. The artist page's slug is made from the name
+  the first time a name is saved.
+- **The lock.** The artist's own first save that includes a first and last name sets **Profile completed** on their
+  user. After that they can only change their avatar. To let them edit again, an admin switches **Profile completed**
+  off on their user (**User Directory** → the artist).
+- **Artists can't edit their artist record directly.** Add their **website**, **Instagram** and, only if they agree,
+  **year of birth** on the record yourself. Your own edits to an artist's user profile sync to the record too, and
+  never lock it.
 - **Collective member** on an artist profile is set by an admin. It matters for the closed Vault.
 - When someone leaves, ask an admin to suspend their account. Their published work stays up unless you unpublish it.
 
