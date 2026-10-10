@@ -5,6 +5,11 @@ name = "upset-checkout"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
 
+# Serve at https://upset-checkout.upsetxociety.workers.dev (the address in VITE_CHECKOUT_ENDPOINT and the Stripe webhook).
+workers_dev = true
+# No extra per-version preview addresses: one public address only.
+preview_urls = false
+
 [vars]
 DIRECTUS_URL = "https://cms.upset.live"
 # Origins allowed to start a checkout. Stripe sends buyers back to the same origin.
