@@ -1,7 +1,8 @@
 import Noise from "../atmosphere/Noise";
 import CRTEffect from "vault66-crt-effect";
 import "vault66-crt-effect/dist/vault66-crt-effect.css";
-import Navbar from "./Navbar";
+// Portal layout trial: folder tabs replace the old Navbar (kept in Navbar.jsx; swap back here to revert).
+import PortalHeader from "./PortalHeader";
 import Footer from "./Footer";
 import { AudioProvider } from "../audio/AudioProvider";
 import { BasketProvider } from "../basket/BasketProvider";
@@ -38,7 +39,7 @@ export default function SiteShell({ children }) {
           enableFlicker={false}
           enableFilter={false}
         >
-          <Navbar />
+          <PortalHeader />
           <main className="site-content">{children}</main>
           <Footer />
         </CRTEffect>

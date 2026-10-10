@@ -85,10 +85,24 @@ import ContentState from "../components/ui/ContentState";
 import { isForbiddenError } from "../lib/directus";
 import { submitForm, validateEnquiry } from "../lib/forms";
 import { usePageTitle } from "../lib/resourceState";
-import { getPublishedArtists, getPublishedWorks } from "../lib/queries";
-import { normalizeArtist, normalizeWork } from "../lib/normalise";
+import {
+  getOpenVaultItems,
+  getPublishedArtists,
+  getPublishedJournalEntries,
+  getPublishedTexts,
+  getPublishedWorks,
+} from "../lib/queries";
+import {
+  normalizeArtist,
+  normalizeJournalEntry,
+  normalizeText,
+  normalizeVaultItem,
+  normalizeWork,
+} from "../lib/normalise";
 import useDirectusResource from "../lib/useDirectusResource";
+import { SHOP_CATEGORY_SLUGS } from "../lib/shop";
 import "./HomePage.css";
+import "./HomePortal.css";
 import { recordPath } from "../lib/paths";
 
 function HeroCard({ hero }) {
@@ -127,12 +141,14 @@ function QuoteCard({ quote }) {
 function ArtistCard({ artist }) {
   return (
     <article className="artist-card">
-      <GlowCanvas
-        id="featured-artist"
-        className="artist-card__image"
-        src={artist.image}
-        alt={artist.imageAlt}
-      />
+      {artist.image && (
+        <GlowCanvas
+          id="featured-artist"
+          className="artist-card__image"
+          src={artist.image}
+          alt={artist.imageAlt}
+        />
+      )}
 
       <div className="artist-card__content">
         <p className="eyebrow">Featured artist</p>
@@ -142,39 +158,6 @@ function ArtistCard({ artist }) {
           Meet the artist
         </Link>
       </div>
-    </article>
-  );
-}
-
-function FeaturedWorkCard({ work }) {
-  return (
-    <article className="home-card featured-work-card">
-      <header className="card-heading">
-        <p className="eyebrow">{work.eyebrow}</p>
-        <h2>{work.title}</h2>
-      </header>
-
-      <Link
-        className="featured-work-card__media"
-        to={work.href}
-        aria-label={`View ${work.title}`}
-      >
-        <DitherCanvas
-          id="featured-canvas"
-          src={work.image}
-          alt={work.imageAlt}
-        />
-      </Link>
-
-      <div className="featured-work-card__body">
-        <p>{work.excerpt}</p>
-
-        <Link className="text-link" to={work.href}>
-          {work.ctaLabel}
-        </Link>
-      </div>
-
-      {work.artist?.slug && <ArtistCard artist={work.artist} />}
     </article>
   );
 }
@@ -233,8 +216,12 @@ function NewsletterCard({ newsletter }) {
   return (
     <article className="home-card newsletter-card">
       <div>
-        <p className="eyebrow">Newsletter</p>
-        <h2>{newsletter.title}</h2>
+        {newsletter.title && (
+          <>
+            <p className="eyebrow">Newsletter</p>
+            <h2>{newsletter.title}</h2>
+          </>
+        )}
         <p>{newsletter.body}</p>
       </div>
 
@@ -261,6 +248,76 @@ function NewsletterCard({ newsletter }) {
   );
 }
 
+// ---- Portal layout (early-2000s portal: side columns, a hero and a "Today on" panel) ----
+
+function Panel({ title, className = "", children }) {
+  return (
+    <section className={`portal-panel ${className}`.trim()}>
+      <h2 className="portal-panel__title">{title}</h2>
+      <div className="portal-panel__body">{children}</div>
+    </section>
+  );
+}
+
+function MoreLink({ to, children }) {
+  return (
+    <Link to={to} className="portal-more">
+      {children} <span aria-hidden="true">»</span>
+    </Link>
+  );
+}
+
+// One section of "Today on UpsetXociety": a labelled bar with a "More" pill, then one item with a Go button.
+function TodayRow({ label, more, item }) {
+  return (
+    <article className="portal-today__row">
+      <div className="portal-today__bar">
+        <h3>{label}</h3>
+        <MoreLink to={more.to}>{more.label}</MoreLink>
+      </div>
+      <div className={`portal-today__item${item.media ? " portal-today__item--media" : ""}`}>
+        {item.media && (
+          <Link to={item.to} className="portal-today__media" aria-label={`Open ${item.title}`}>
+            {item.media}
+          </Link>
+        )}
+        <div className="portal-today__text">
+          {item.meta && <p className="portal-today__meta">{item.meta}</p>}
+          <h4>
+            <Link to={item.to}>{item.title}</Link>
+          </h4>
+          {item.excerpt && <p>{item.excerpt}</p>}
+          <Link to={item.to} className="portal-go">
+            {item.go || "Go"} ›
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ShopPanel({ item }) {
+  const to = recordPath("/shop", item.slug);
+  return (
+    <Panel title="From the Shop" className="portal-shop">
+      {item.image && (
+        <Link to={to} className="portal-shop__media" aria-label={`View ${item.title}`}>
+          <img src={item.image} alt={item.imageAlt || item.title} loading="lazy" />
+        </Link>
+      )}
+      <p className="portal-today__meta">{[item.category, item.soldOut ? "Sold out" : item.priceLabel].filter(Boolean).join(" · ")}</p>
+      <h3 className="portal-shop__title">
+        <Link to={to}>{item.title}</Link>
+      </h3>
+      {item.excerpt && <p>{item.excerpt}</p>}
+      <Link to={to} className="portal-go">
+        View ›
+      </Link>
+      <MoreLink to="/shop">Visit the Shop</MoreLink>
+    </Panel>
+  );
+}
+
 export default function HomePage() {
   const { data: works, status: worksStatus, error: worksError } = useDirectusResource(
     getPublishedWorks,
@@ -272,6 +329,11 @@ export default function HomePage() {
     [],
     normalizeArtist
   );
+  // Secondary panels: each is optional and simply hidden if its source fails or is empty.
+  const texts = useDirectusResource(getPublishedTexts, [], normalizeText, "home-texts");
+  const journal = useDirectusResource(getPublishedJournalEntries, [], normalizeJournalEntry, "home-journal");
+  const vault = useDirectusResource(getOpenVaultItems, [], normalizeVaultItem, "home-vault");
+  const [heroIndex, setHeroIndex] = useState(0);
 
   usePageTitle("");
 
@@ -285,19 +347,16 @@ export default function HomePage() {
     artistsStatus === "success" && featuredRecord
       ? artists.find((artist) => artist.slug === featuredRecord.artist?.slug)
       : null;
-  const featuredWork = featuredRecord && {
-    ...featuredRecord,
-    eyebrow: "Featured work",
-    href: recordPath("/works", featuredRecord.slug),
-    ctaLabel: "View the work",
-    artist: featuredArtist || null,
-  };
+
+  // The hero cycles through up to five works that have an image ("Next movie 1 2 3 4 5").
+  const heroWorks = [featuredRecord, ...works.filter((work) => work !== featuredRecord)].filter((work) => work?.image).slice(0, 5);
+  const heroRecord = heroWorks[heroIndex % Math.max(heroWorks.length, 1)] || featuredRecord;
   const hero = {
     title: "UpsetXociety",
     subtitle: "Art House",
-    image: featuredRecord?.image || "",
-    imageAlt: featuredRecord?.imageAlt || "",
-    href: featuredRecord ? recordPath("/works", featuredRecord.slug) : "/works",
+    image: heroRecord?.image || "",
+    imageAlt: heroRecord?.imageAlt || "",
+    href: heroRecord ? recordPath("/works", heroRecord.slug) : "/works",
     ctaLabel: "Enter the archive",
   };
   const relatedWorks = works
@@ -307,47 +366,163 @@ export default function HomePage() {
       ...work,
       href: recordPath("/works", work.slug),
     }));
+  const musicWork = works.find((work) => work.audio && work.slug !== featuredRecord?.slug) || works.find((work) => work.audio);
+  const latestText = texts.status === "success" ? texts.data[0] : null;
+  const latestEntry = journal.status === "success" ? journal.data[0] : null;
+  const shopItem =
+    vault.status === "success"
+      ? vault.data.find((item) => SHOP_CATEGORY_SLUGS.includes(item.categorySlug) && item.buyable) ||
+        vault.data.find((item) => SHOP_CATEGORY_SLUGS.includes(item.categorySlug))
+      : null;
   const quote = {
     text: "Blackness is lit, don't let anybody tell you it's not.",
     attribution: "Sylvia Wynter",
   };
   const newsletter = {
-    title: "Stay connected",
+    title: "",
     body: "News, works, releases and archive updates--occasionally.",
     placeholder: "Enter your email",
     buttonLabel: "Subscribe",
   };
 
   return (
-    <main className="homepage page-content">
-      <HeroCard hero={hero} />
+    <main className="homepage page-content portal">
+      <div className="portal-grid">
+        {/* ---- Left column ---- */}
+        <aside className="portal-col portal-col--left" aria-label="Featured">
+          {featuredArtist?.slug && (
+            <Panel title="Featured artist" className="portal-artist">
+              <ArtistCard artist={featuredArtist} />
+            </Panel>
+          )}
 
-      <section className="homepage__content">
-        <QuoteCard quote={quote} />
+          <Panel title="Quote" className="portal-quote">
+            <QuoteCard quote={quote} />
+          </Panel>
 
-        {worksStatus === "error" && (
-          <ContentState status={isForbiddenError(worksError) ? "closed" : "error"} />
-        )}
+          <Panel title="Stay connected" className="portal-newsletter">
+            <NewsletterCard newsletter={newsletter} />
+          </Panel>
 
-        {featuredWork && <FeaturedWorkCard work={featuredWork} />}
+          <Panel title="Bookings + commissions">
+            <p>Work with the house.</p>
+            <MoreLink to="/commissions">Book a commission</MoreLink>
+          </Panel>
+        </aside>
 
-        {relatedWorks.length > 0 && (
-          <section className="related-works-section" aria-labelledby="related-title">
-            <header className="card-heading">
-              <p className="eyebrow">Continue exploring</p>
-              <h2 id="related-title">Related works</h2>
-            </header>
-
-            <div className="related-works-grid">
-              {relatedWorks.map((work) => (
-                <WorkCard key={work.slug} work={work} />
-              ))}
-            </div>
+        {/* ---- Centre column ---- */}
+        <div className="portal-col portal-col--main">
+          <section className="portal-panel portal-hero" aria-label="Featured work">
+            <HeroCard hero={hero} />
+            {heroWorks.length > 1 && (
+              <div className="portal-hero__pager">
+                <span className="portal-hero__pager-label">Next work »</span>
+                {heroWorks.map((work, index) => (
+                  <button
+                    key={work.slug}
+                    type="button"
+                    className="portal-hero__page"
+                    aria-pressed={index === heroIndex % heroWorks.length}
+                    aria-label={`Show ${work.title}`}
+                    onClick={() => setHeroIndex(index)}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
+            )}
           </section>
-        )}
 
-        <NewsletterCard newsletter={newsletter} />
-      </section>
+          {worksStatus === "error" && (
+            <ContentState status={isForbiddenError(worksError) ? "closed" : "error"} />
+          )}
+
+          <Panel title="Today on UpsetXociety" className="portal-today">
+            {featuredRecord && (
+              <TodayRow
+                label="Works"
+                more={{ to: "/works", label: "More works" }}
+                item={{
+                  to: recordPath("/works", featuredRecord.slug),
+                  title: featuredRecord.title,
+                  meta: [featuredRecord.type, featuredRecord.year].filter(Boolean).join(" · "),
+                  excerpt: featuredRecord.excerpt,
+                  media: featuredRecord.image ? (
+                    <DitherCanvas id="featured-canvas" src={featuredRecord.image} alt={featuredRecord.imageAlt} />
+                  ) : null,
+                }}
+              />
+            )}
+
+            {musicWork && (
+              <TodayRow
+                label="Music"
+                more={{ to: "/works", label: "More music" }}
+                item={{
+                  to: recordPath("/works", musicWork.slug),
+                  title: musicWork.title,
+                  meta: [musicWork.artist?.name, musicWork.year].filter(Boolean).join(" · "),
+                  excerpt: musicWork.excerpt,
+                  go: "Listen",
+                  media: musicWork.image ? (
+                    <GlowCanvas className="portal-today__canvas" src={musicWork.image} alt={musicWork.imageAlt} />
+                  ) : null,
+                }}
+              />
+            )}
+
+            {latestText && (
+              <TodayRow
+                label="Texts"
+                more={{ to: "/texts", label: "More texts" }}
+                item={{
+                  to: recordPath("/texts", latestText.slug),
+                  title: latestText.title,
+                  meta: [latestText.category, latestText.author?.name].filter(Boolean).join(" · "),
+                  excerpt: latestText.excerpt,
+                  go: "Read",
+                }}
+              />
+            )}
+
+            {latestEntry && (
+              <TodayRow
+                label="Journal"
+                more={{ to: "/journal", label: "More journal" }}
+                item={{
+                  to: recordPath("/journal", latestEntry.slug),
+                  title: latestEntry.title,
+                  meta: [latestEntry.category, latestEntry.date].filter(Boolean).join(" · "),
+                  excerpt: latestEntry.excerpt,
+                  go: "Read",
+                }}
+              />
+            )}
+
+            {!featuredRecord && !latestText && !latestEntry && <ContentState status="empty" />}
+          </Panel>
+        </div>
+
+        {/* ---- Right column ---- */}
+        <aside className="portal-col portal-col--right" aria-label="Shop and more works">
+          {shopItem && <ShopPanel item={shopItem} />}
+
+          {relatedWorks.length > 0 && (
+            <Panel title="More works" className="portal-more-works">
+              <div className="related-works-grid">
+                {relatedWorks.map((work) => (
+                  <WorkCard key={work.slug} work={work} />
+                ))}
+              </div>
+            </Panel>
+          )}
+
+          <Panel title="The Vault">
+            <p>Original works, limited editions and archive objects.</p>
+            <MoreLink to="/vault">Open the Vault</MoreLink>
+          </Panel>
+        </aside>
+      </div>
     </main>
   );
 }

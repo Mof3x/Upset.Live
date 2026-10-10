@@ -1,0 +1,354 @@
+/*
+  Portal header: the title centred between the banner and the date box, then overlapping folder tabs,
+  a thin strip and a ticker. Thin glowing lines (1px + a soft glow), square corners, translucent glass
+  backgrounds so the noise and CRT glow show through. Bold only for the title, tab labels and pills.
+  Uses the site palette: black, aliceblue / #f8f1f1 text, mint #dfffeb glow.
+*/
+.portal-header {
+  --glow: rgba(223, 255, 235, 0.7);
+  --glow-soft: rgba(223, 255, 235, 0.28);
+  --line: 1px solid var(--glow);
+  --glass: rgba(6, 10, 8, 0.28);
+  --glass-front: rgba(4, 8, 6, 0.72);
+  position: relative;
+  z-index: 1000;
+  width: min(100% - 1rem, 1200px);
+  margin: 1rem auto 0;
+  padding: 0;
+  text-align: left;
+}
+
+.portal-header a {
+  color: #f8f1f1;
+  text-decoration: none;
+}
+
+/* ---- Top row: banner, centred title, date ---- */
+.portal-header__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.portal-logo {
+  grid-column: 2;
+  grid-row: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.6rem;
+  border: var(--line);
+  background: var(--glass);
+  box-shadow: 0 0 12px var(--glow-soft), inset 0 0 10px rgba(223, 255, 235, 0.1);
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 0 10px var(--glow-soft);
+}
+
+.portal-header__banner {
+  grid-column: 1;
+  grid-row: 1;
+  display: grid;
+  align-content: center;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0.6rem 1rem;
+  border: var(--line);
+  background: var(--glass);
+  box-shadow: 0 0 8px var(--glow-soft);
+  font-size: 1rem;
+  text-align: center;
+}
+
+.portal-header__banner-eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.portal-header__date {
+  grid-column: 3;
+  grid-row: 1;
+  display: grid;
+  align-content: center;
+  gap: 0.2rem;
+  padding: 0.5rem 0.85rem;
+  border: var(--line);
+  background: var(--glass);
+  box-shadow: 0 0 8px var(--glow-soft);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.portal-header__date strong {
+  font-style: italic;
+}
+
+.portal-header__date a {
+  font-size: 0.82rem;
+  opacity: 0.85;
+}
+
+/* ---- Overlapping folder tabs with diagonal edges ---- */
+.portal-tabs {
+  --slant: 1.1rem; /* width of each diagonal edge */
+}
+
+.portal-tabs ul {
+  display: flex;
+  align-items: flex-end;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Stacking order comes from the inline z-index in PortalHeader.jsx. Neighbours share half a slant. */
+.portal-tabs li {
+  position: relative;
+  flex: 1 1 0;
+  min-width: max-content;
+}
+
+.portal-tabs li + li {
+  margin-left: calc(var(--slant) * -0.5);
+}
+
+/* The tab shape is drawn on ::before, clipped to a trapezoid: a translucent glass fill with 1px gradient
+   lines for the edges. The glow is a drop-shadow on the link, so it follows the shape and is not clipped. */
+.portal-tab {
+  --tab-line: var(--glow);
+  --tab-fill: var(--glass);
+  position: relative;
+  display: block;
+  padding: 0.65rem calc(var(--slant) + 0.85rem) 0.55rem;
+  filter: drop-shadow(0 0 3px var(--glow-soft));
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.portal-tab::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: polygon(0 100%, var(--slant) 0, calc(100% - var(--slant)) 0, 100% 100%);
+  background:
+    linear-gradient(
+        to bottom right,
+        transparent calc(50% - 1px),
+        var(--tab-line) calc(50% - 1px),
+        var(--tab-line) calc(50% + 1px),
+        transparent calc(50% + 1px)
+      )
+      left top / var(--slant) 100% no-repeat,
+    linear-gradient(
+        to bottom left,
+        transparent calc(50% - 1px),
+        var(--tab-line) calc(50% - 1px),
+        var(--tab-line) calc(50% + 1px),
+        transparent calc(50% + 1px)
+      )
+      right top / var(--slant) 100% no-repeat,
+    linear-gradient(var(--tab-line), var(--tab-line)) center top / calc(100% - 2 * var(--slant)) 1px no-repeat,
+    linear-gradient(var(--tab-line), var(--tab-line)) center bottom / 100% var(--tab-base, 1px) no-repeat,
+    var(--tab-fill);
+}
+
+.portal-tab:hover {
+  --tab-fill: rgba(223, 255, 235, 0.08);
+  filter: drop-shadow(0 0 6px var(--glow));
+}
+
+.portal-tab:focus-visible {
+  --tab-line: #ffffff;
+  --tab-fill: rgba(223, 255, 235, 0.14);
+  outline: none;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+/* The open tab is the front pane: taller, darker glass, brighter lines, and open at the bottom. */
+.portal-tab.is-active {
+  --tab-line: #dfffeb;
+  --tab-fill: var(--glass-front);
+  --tab-base: 0;
+  padding-top: 0.9rem;
+  filter: drop-shadow(0 0 6px var(--glow));
+  text-shadow: 0 0 8px var(--glow);
+}
+
+/* ---- Strip under the tabs ---- */
+.portal-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+  padding: 0.35rem 0.6rem;
+  border: var(--line);
+  background: var(--glass);
+  box-shadow: 0 0 8px var(--glow-soft);
+}
+
+.portal-strip__chevrons {
+  font-weight: 700;
+  letter-spacing: -0.1em;
+  opacity: 0.9;
+}
+
+.portal-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.85rem;
+  border: var(--line);
+  font-weight: 700;
+  font-size: 0.9rem;
+  box-shadow: 0 0 6px var(--glow-soft);
+}
+
+.portal-pill--bright {
+  color: #000 !important;
+  background: #dfffeb;
+}
+
+.portal-strip__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.92rem;
+  opacity: 0.8;
+}
+
+.portal-strip__link {
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+
+/* ---- Ticker ---- */
+.portal-ticker {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  border-top: var(--line);
+  border-bottom: var(--line);
+  box-shadow: 0 0 8px var(--glow-soft);
+  font-size: 0.92rem;
+}
+
+.portal-ticker__label {
+  flex: none;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.04em;
+}
+
+.portal-ticker__window {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+}
+
+.portal-ticker__track {
+  display: flex;
+  gap: 2.5rem;
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  animation: portal-ticker 40s linear infinite;
+}
+
+.portal-ticker:hover .portal-ticker__track,
+.portal-ticker:focus-within .portal-ticker__track {
+  animation-play-state: paused;
+}
+
+.portal-ticker__track li {
+  display: flex;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.portal-ticker__kind {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+@keyframes portal-ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-ticker__track {
+    animation: none;
+  }
+}
+
+/* ---- Phones and small tablets: title centred on its own, date underneath, tabs scroll sideways ---- */
+@media (max-width: 820px) {
+  .portal-header__top {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 0.6rem;
+  }
+
+  .portal-logo,
+  .portal-header__date {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .portal-header__banner {
+    display: none;
+  }
+
+  .portal-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .portal-tabs ul {
+    width: max-content;
+    min-width: 100%;
+    padding-top: 0.4rem;
+  }
+
+  .portal-tab {
+    padding: 0.6rem calc(var(--slant) + 0.55rem) 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .portal-strip__text {
+    display: none;
+  }
+
+  .portal-strip {
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 480px) {
+  .portal-header__date {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .portal-header__date a {
+    display: none;
+  }
+}

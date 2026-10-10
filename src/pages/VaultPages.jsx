@@ -20,17 +20,8 @@ import { useBasket } from "../lib/basket";
 import { checkoutEnabled, clearPendingCheckout } from "../lib/checkout";
 import { contactEmail } from "../lib/forms";
 import { recordPath } from "../lib/paths";
+import { SHOP_CATEGORY_SLUGS } from "../lib/shop";
 
-// Only open_public items that are not private are ever requested (see queries.js).
-// The Shop is the public catalogue subset of the open Vault.
-const SHOP_CATEGORY_SLUGS = [
-  "prints",
-  "publications",
-  "posters",
-  "apparel",
-  "music-digital-releases",
-  "guest-works",
-];
 
 const identity = (record) => record;
 
