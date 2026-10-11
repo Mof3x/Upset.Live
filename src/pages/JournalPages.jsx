@@ -33,7 +33,7 @@ export function JournalPage() {
     <main className="core-page page-content">
       <PageIntro
         eyebrow="Journal"
-        title="Amebo"
+        title={<span style={{ fontStyle: "italic" }}>Amebo</span>}
         description="Intellectual gist."
       />
       <CategoryNav
