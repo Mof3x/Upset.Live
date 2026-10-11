@@ -33,8 +33,8 @@ export function JournalPage() {
     <main className="core-page page-content">
       <PageIntro
         eyebrow="Journal"
-        title="Updates from the house"
-        description="Process, reflections, notes and signals from the archive."
+        title="Amebo"
+        description="Intellectual gist."
       />
       <CategoryNav
         label="Filter journal by category"
