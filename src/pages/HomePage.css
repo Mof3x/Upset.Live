@@ -6,8 +6,9 @@
 .page-content {
   width: min(100% - 1rem, 1200px);
   margin-inline: auto;
+  /* No z-index here: one would make a stacking context that traps the page's images under the CRT
+     overlays (z-index 99). index.css lifts media above them instead. */
   position: relative;
-  z-index: 1;
 }
 
 header {
@@ -153,6 +154,14 @@ quote {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
+}
+
+/* Related-work canvases need their own size: without one, a canvas's box follows its pixel size
+   and the redraw loop grows it on high-density (mobile) screens. Overrides .GlowCanvas's 3 / 1. */
+.related-works-grid .work-card__image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
 }
 
 form {

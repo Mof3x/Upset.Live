@@ -23,8 +23,9 @@
 }
 
 .artist-page__identity h1 {
+  justify-self: center;
   margin: 0;
-  text-align: left;
+  text-align: center;
   font-size: clamp(3rem, 8vw, 6rem);
   line-height: 0.85;
 }

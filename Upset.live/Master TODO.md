@@ -78,15 +78,16 @@ Test record (decision: publish briefly, then unpublish):
       Left: a server-side endpoint that writes `newsletter_signups`, then set `VITE_FORMS_ENDPOINT`.
 - [~] Contact and Commissions forms. Built, with validation and a honeypot.
       Left: server-side validation, rate limiting, storage and email notification.
-- [~] Commerce boundary. The code offers request-info only. **Decision:** confirm for the first release, or plan reservations or Stripe.
+- [~] Commerce: Stripe checkout with stock holds (decided 07/10/2026). Built on branch `shop-checkout`. Left: run the Directus package `shop-checkout` (1a, 1b), deploy the Worker, Stripe setup (live mode, receipts, webhook), set `VITE_CHECKOUT_ENDPOINT`, test with a test item, merge.
 
 ## P2: larger publishing areas
 
 - [x] Razz templates (issues, features, contributors). They show "not open yet" until Razz permissions and publish flags are set.
-- [~] Vault item detail with request-info. Left: the reservation flow. Provenance stays private.
-- [~] Shop catalogue and item pages. Left: inventory, payments and orders.
+- [~] Vault item detail with request-info and Buy (when priced and in stock). Left: going live (see Commerce). Provenance stays private.
+- [~] Shop catalogue and item pages with price, "Sold out" and Buy. Left: going live; later a basket and order records in Directus.
 - [ ] Music players and release/performance pages, once audio and licensing are ready.
-- [ ] **Decision:** Public access for `vault_items` (rule #11 was removed on purpose), the legacy `files` table (work galleries),
+- [~] Public access for `vault_items`: decided 07/10/2026 (open items, incl. price and stock, and their images); script `shop-public-permissions.ps1` prepared, not run.
+- [ ] **Decision:** Public access for the legacy `files` table for work galleries,
       Razz and `razz_contributors`, `commission_types` and `homepage_blocks`. Each would get its own reviewed script.
 
 ## P2: production readiness

@@ -9,11 +9,12 @@
 }
 
 .not-found-page h1 {
+  justify-self: center;
   max-width: 12ch;
   margin: 0;
   font-size: clamp(3rem, 9vw, 7rem);
   line-height: 0.9;
-  text-align: left;
+  text-align: center;
 }
 
 .not-found-page__message {

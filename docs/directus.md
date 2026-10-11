@@ -32,15 +32,16 @@ reviewed.** See [How CMS changes are made](#how-cms-changes-are-made).
 | `razz_features` | Feature pages | `is_published` | `issue_id` puts a feature in an issue |
 | `razz_contributors` | `/contributors` | none: listed only when credited on a published feature | Separate from `artists` |
 | `razz_feature_contributors`, `razz_feature_files` | Feature credits and gallery | follows the feature | |
-| `vault_items`, `vault_categories` | `/vault`, `/shop` | `vault_classification = open_public` and `status != private` | `notes`, `location`, `price`, `inventory` are internal |
-| `vault_item_artists`, `vault_item_files` | Vault credits and images | follows the item | |
+| `vault_items`, `vault_categories` | `/vault`, `/shop`, the basket and checkout | `vault_classification = open_public` and `status != private` | `price`, `inventory` and `image_file_id` (the photo) are public on open items; `notes`, `location` are internal |
+| `vault_item_artists` | Vault credits | follows the item (and the artist must be published) | |
+| `vault_item_files` | Not used | | Points at the legacy `files` table, which has no images (see below) |
 | `vault_provenance` | Not public | | Acquisition, owners, exhibition history, condition |
 | `commission_types` | `/commissions` (if readable) | none | The site has a built-in fallback list |
 | `commission_requests` (+ `_artists`, `_works`) | Not public | | For a future forms endpoint |
 | `contact_messages`, `newsletter_signups` | Not public | | For a future forms endpoint |
 | `site_settings` | Footer statement and social links | none | Not a Directus singleton; the site reads the first row. `homepage_featured_*` arrays aren't used yet |
 | `navigation_items` | Not used yet | none | Navigation is hard-coded |
-| `files` | Galleries (via `work_files`, etc.) | | **Legacy** file table with a `url` column, separate from the Directus file library |
+| `files` | Galleries (via `work_files`, etc.) | | **Legacy** file table. On the live database it has only an `id` column (checked 7 October 2026), so these galleries can't show images. Use the Directus file library |
 
 ### Database rules
 
@@ -58,10 +59,11 @@ Checked anonymously against the live API on 2 October 2026, and again by the pub
 | Open to the public | Closed (403) |
 |---|---|
 | `artists`, `works`, `texts`, `journal` (published only) | `razz_issues`, `razz_features`, `razz_contributors` |
-| `work_artists`, `text_authors`, `text_related_works` (only rows where both sides are published) | `vault_items` |
-| `directus_files` (only images and recordings used by published records) | `work_files` (galleries) |
+| `work_artists`, `text_authors`, `text_related_works` (only rows where both sides are published) | `work_files` (galleries) |
+| `directus_files` (only images and recordings used by published records, and photos of open vault items) | `vault_provenance` |
 | `work_categories`, `text_categories`, `journal_categories`, `vault_categories` (`name`, `slug`) | `commission_types` |
 | `site_settings` (the footer fields) | everything private listed above |
+| `vault_items`, `vault_item_artists` (open items only; opened 7 October 2026) | |
 
 The closed sections show "This room is not open yet" on the site. Opening each one is a separate decision, made with a
 reviewed permissions script.
@@ -69,6 +71,14 @@ reviewed permissions script.
 `works.price`, `artists.year_of_birth` and `artists.is_collective_member` are **intentionally** readable on published
 records (owner decision, 1 October 2026). The site doesn't display them, but anyone can read them through the API.
 Remember this when publishing test or placeholder content.
+
+**Shop and checkout (7 October 2026, the shop-checkout package).** `vault_items.image_file_id` was added (Image field,
+related to `directus_files`, ON DELETE SET NULL); Public rules #100 (`vault_items`) and #101 (`vault_item_artists`)
+were created; #4 gained `id`; #96 gained a branch that allows a file while an open item uses it as its photo and no
+private or empty-status item does. The checkout Worker logs in as the `checkout-worker` user, which holds only the
+**Checkout Worker** policy (`3e4abaf5-…`): read open vault items, read category slugs, update `inventory` only on
+open items (never below 0). Like every signed-in token, it also gets what the Public role can read. The Vault forms
+in the Data Studio were given dropdowns and notes (presentation only). See `workers/checkout/README.md`.
 
 To check access yourself, request a collection without logging in:
 
@@ -87,8 +97,8 @@ curl -s -o /dev/null -w "%{http_code}\n" "https://cms.upset.live/items/razz_issu
 
 The Artist role was configured and tested in stages in September 2026. A follow-up package (profile lock after first
 setup, automatic artist records, automatic work and text credits, slug cleaning, "My works"/"My texts" views) was
-applied on 2 October 2026, and its flows are active. Testing it as an artist is still outstanding, so the
-[CMS guide](../Upset.live/CMS%20guide/CMS%20guide.md) still lists those parts as coming soon. The music package
+applied on 2 October 2026, and its flows are active. The [CMS guide](../Upset.live/CMS%20guide/CMS%20guide.md)
+describes it (updated 7 October 2026), but testing it from an artist's account is still outstanding. The music package
 (6–7 October 2026) added the two music fields and let artists set them on their own works (Artist rules #14–#16).
 
 ## How CMS changes are made

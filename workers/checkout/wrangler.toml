@@ -1,0 +1,32 @@
+# Checkout Worker for upset.live. See README.md for setup.
+# Secrets (never in this file): STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, DIRECTUS_TOKEN.
+
+name = "upset-checkout"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+# Serve at https://upset-checkout.upsetxociety.workers.dev (the address in VITE_CHECKOUT_ENDPOINT and the Stripe webhook).
+workers_dev = true
+# No extra per-version preview addresses: one public address only.
+preview_urls = false
+
+[vars]
+DIRECTUS_URL = "https://cms.upset.live"
+# Origins allowed to start a checkout. Stripe sends buyers back to the same origin.
+ALLOWED_ORIGINS = "https://upset.live,http://localhost:5173"
+CURRENCY = "gbp"
+# Delivery addresses Stripe accepts (ISO country codes, comma-separated).
+SHIPPING_COUNTRIES = "GB"
+# Vault category slugs that need no delivery address.
+DIGITAL_CATEGORIES = "music-digital-releases"
+# Open checkouts one visitor (IP address) may hold at a time.
+MAX_HOLDS_PER_IP = "5"
+# Optional: a Stripe shipping rate id (shr_...) added to every physical order.
+# Without it, prices are treated as including postage.
+# SHIPPING_RATE_ID = ""
+
+# Webhook de-duplication and the per-visitor hold count.
+# Create it with `npx wrangler kv namespace create EVENTS` and paste the id here.
+[[kv_namespaces]]
+binding = "EVENTS"
+id = "c0e7357f0b144f748c5f6279e53b8617"

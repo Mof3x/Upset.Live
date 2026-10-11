@@ -6,7 +6,7 @@ How to put things on [upset.live](https://upset.live). Read this page first, the
 - **[For editors](For%20editors.md):** reviewing, linking and publishing everything.
 - **[Content reference](Content%20reference.md):** every field, what it does on the site, and how to fill it in.
 
-*Last checked against the live site: 2 October 2026.*
+*Last checked against the live site: 2 October 2026. Updated 7 October 2026 for the artist set-up and music.*
 
 ---
 
@@ -26,7 +26,7 @@ You can't sign yourself up. Ask an admin to invite you. They'll give you one of 
 
 | Role | For | You can |
 |---|---|---|
-| **Artist** | Collective members and invited artists | Edit your own profile, add your works and texts, upload images. You can't publish; an editor does that |
+| **Artist** | Collective members and invited artists | Fill in your profile, add your works (with music if you make it) and texts, upload images and recordings. You can't publish; an editor does that |
 | **Editor** | People who run the site's content | Edit and publish everything editorial, and link records together |
 | **Administrator** | One or two trusted maintainers | Everything, including accounts and settings |
 
@@ -74,6 +74,9 @@ Good slugs:
 - are unique within their collection;
 - **don't change after publishing**, because any link someone has shared would break.
 
+You rarely have to type one: leave the slug empty on a new record and Directus makes it from the title (or the name).
+A slug you do type is tidied into this form when you save.
+
 ### 3. Text is plain paragraphs
 
 Descriptions, bios and text bodies appear on the site as plain paragraphs. Leave a blank line between paragraphs.
@@ -92,7 +95,8 @@ Only upload images you have the right to publish, and get permission before uplo
 
 The site shows "By ___" on a work, the authors of a text, and related works. These links aren't fields on the work
 or text. They're small records of their own, in collections such as **Work Artists** and **Text Authors**. A work with
-no Work Artists record shows no artist. [For editors](For%20editors.md#linking-records) explains how to create them.
+no Work Artists record shows no artist. Works and texts that artists create are credited to them automatically; other
+credits are added by editors. [For editors](For%20editors.md#linking-records) explains how.
 
 Links only appear when **both** sides are published. A published work linked to an unpublished artist shows no credit
 until the artist is published too.
@@ -109,7 +113,7 @@ until the artist is published too.
 | About → Ethos | The published text with the slug `ethos` |
 | Journal | Journal |
 | Razz magazine | Razz Issues, Razz Features, Razz Contributors *(not open to the public yet)* |
-| Vault and Shop | Vault Items *(not open to the public yet)* |
+| Vault and Shop | Vault Items (and Vault Item Artists for credits); selling is explained in [For editors → Vault and Shop](For%20editors.md#vault-and-shop) |
 | Commissions | A built-in list of disciplines, with example works from matching work categories |
 | Footer statement and social links | Site Settings |
 | About page text, homepage quote, menus | Built into the website; ask a developer to change them |
@@ -122,6 +126,8 @@ records are published. An admin opens each section when it's ready.
 The contact, commission, newsletter and "Request information" forms currently open an email to
 **hello@upset.live**, pre-filled with the visitor's answers. Nothing from the forms is stored in Directus yet, so
 someone needs to check that inbox.
+
+Shop orders don't use these forms: Stripe emails each sale, and the Stripe Dashboard lists them under **Payments**.
 
 ## Getting help
 

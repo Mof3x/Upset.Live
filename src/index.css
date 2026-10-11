@@ -91,6 +91,20 @@ html, body {
   min-height: 100svh;
 }
 
+/*
+  Keep the CRT overlays off the artwork. vault66-crt-effect draws its sweep line and edge glow
+  (the vignette) at z-index 99 over the whole page. Its scanlines are turned off in SiteShell.
+  Media is lifted to 100, above them. .media-frame isolates its own stacking context, so the frame
+  itself is lifted, not just the image inside it. :where() keeps the specificity at zero, so a component
+  that positions its media explicitly (for example position: absolute) still wins. Nothing between
+  .crt-inner and the media may set a z-index (see .page-content in HomePage.css), or the media is
+  trapped under the overlays again.
+*/
+:where(.crt-inner) :where(.media-frame, img, canvas, video) {
+  position: relative;
+  z-index: 100;
+}
+
 
 
 

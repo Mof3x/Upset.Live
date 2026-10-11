@@ -97,6 +97,9 @@ const razzFeatureFields = ["id", "slug", "title", "body", "issue_id"];
 
 const contributorFields = ["id", "slug", "name", "bio", "portrait_file_id"];
 
+// `price` and `inventory` decide whether an item shows a Buy button or "Sold out"
+// (see normalizeVaultItem). The Public role must be able to read both: a refused
+// field makes the request fall back to `fields=*`, which drops the category.
 const vaultItemFields = [
   "id",
   "slug",
@@ -105,11 +108,15 @@ const vaultItemFields = [
   "status",
   "edition_number",
   "edition_size",
+  "price",
+  "inventory",
+  "image_file_id",
   "category_id.name",
   "category_id.slug",
 ];
 
-// Legacy `files` table (work_files, vault_item_files point here, not at directus_files).
+// Legacy `files` table (work_files, razz_feature_files point here, not at directus_files).
+// On the live database (07/10/2026) it has only an `id` column, so these galleries stay empty.
 const legacyFileFields = ["file_id.id", "file_id.url", "file_id.filename"];
 
 function collectionOptions(fields, params = {}, requestOptions = {}) {
@@ -457,18 +464,15 @@ async function attachVaultRelations(items, options) {
   const ids = idsOf(list);
   if (!ids.length) return items;
 
+  // Photos come from vault_items.image_file_id (the Directus file library), not
+  // from vault_item_files: that junction points at the legacy `files` table,
+  // which on the live database has only an id column, so it holds no images.
   const byItem = { "filter[vault_item_id][_in]": ids.join(",") };
-  const [artists, files] = await Promise.all([
-    junctionRows("vault_item_artists", ["vault_item_id", "role", "artist_id.name", "artist_id.slug"], byItem, options),
-    junctionRows("vault_item_files", ["vault_item_id", "caption", "order", ...legacyFileFields], byItem, options, "vault_item_files", "order"),
-  ]);
-
+  const artists = await junctionRows("vault_item_artists", ["vault_item_id", "role", "artist_id.name", "artist_id.slug"], byItem, options);
   const artistsByItem = groupBy(artists, "vault_item_id");
-  const filesByItem = groupBy(files, "vault_item_id");
 
   list.forEach((item) => {
     item.vault_item_artists = artistsByItem.get(item.id) || [];
-    item.vault_item_files = filesByItem.get(item.id) || [];
   });
 
   return items;

@@ -4,12 +4,14 @@ import "vault66-crt-effect/dist/vault66-crt-effect.css";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { AudioProvider } from "../audio/AudioProvider";
+import { BasketProvider } from "../basket/BasketProvider";
 import NowPlaying from "../audio/NowPlaying";
 import "../../index.css";
 
 export default function SiteShell({ children }) {
   return (
     <AudioProvider>
+    <BasketProvider>
     <div className="site-shell">
       <div className="noise-layer">
       <Noise
@@ -25,16 +27,14 @@ export default function SiteShell({ children }) {
           enabled
           sweepDuration={10}
           sweepThickness={10}
-          scanlineOpacity={0.3}
           theme="custom"
-          scanlineColor="#dfffeb"
-          enableScanlines
+          enableScanlines={false}
           enableSweep
           enableGlow
           glowColor="#201a1a"
           enableEdgeGlow
-          edgeGlowColor="rgba(220, 224, 223, 0.9)"
-          edgeGlowSize={60}
+          edgeGlowColor="rgba(220, 224, 223, 0.3)"
+          edgeGlowSize={28}
           enableFlicker={false}
           enableFilter={false}
         >
@@ -45,6 +45,7 @@ export default function SiteShell({ children }) {
       </div>
       <NowPlaying />
     </div>
+    </BasketProvider>
     </AudioProvider>
   )
 }

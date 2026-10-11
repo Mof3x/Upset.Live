@@ -20,9 +20,10 @@ import {
   ContributorsPage,
   ContributorPage,
 } from "./pages/RazzPages";
-import { VaultPage, VaultItemPage, ShopPage, ShopSlugPage } from "./pages/VaultPages";
+import { VaultPage, VaultItemPage, ShopPage, ShopSlugPage, OrderCompletePage } from "./pages/VaultPages";
 import { CommissionsPage, CommissionDisciplinePage } from "./pages/CommissionPages";
 import { ContactPage, NewsletterPage } from "./pages/FormPages";
+import BasketPage from "./pages/BasketPage";
 import SiteShell from "./components/layout/SiteShell";
 
 function ScrollToTop() {
@@ -59,6 +60,9 @@ export default function App() {
           <Route path="/vault/:slug" element={<VaultItemPage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/shop/:slug" element={<ShopSlugPage />} />
+          <Route path="/basket" element={<BasketPage />} />
+          {/* Stripe returns buyers here after paying (see workers/checkout). */}
+          <Route path="/order/complete" element={<OrderCompletePage />} />
           <Route path="/commissions" element={<CommissionsPage />} />
           <Route path="/commissions/:discipline" element={<CommissionDisciplinePage />} />
           <Route path="/newsletter" element={<NewsletterPage />} />

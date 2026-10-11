@@ -5,7 +5,12 @@
 ```text
 visitor ──► upset.live (DNS on Cloudflare) ──► GitHub Pages: built static files from dist/
    │
-   └──── browser JavaScript ──► cms.upset.live (Directus on Heroku) ──► Supabase Postgres + Storage
+   ├──── browser JavaScript ──► cms.upset.live (Directus on Heroku) ──► Supabase Postgres + Storage
+   │
+   └──── Checkout ──► checkout Worker (Cloudflare) ──► Stripe Checkout
+                       │   ▲
+                       │   └── Stripe webhook (checkout expired)
+                       └────► cms.upset.live (reads price and stock, holds one unit)
 ```
 
 - **GitHub Pages** serves the built app. The Pages source must be set to **GitHub Actions** (not "Deploy from a
@@ -44,6 +49,10 @@ database URL or service key in one.**
 | `VITE_DIRECTUS_DEV_PROXY` | `false` makes `npm run dev` call Directus directly instead of through `/cms` | `.env.local`, optional |
 | `VITE_FORMS_ENDPOINT` | Server endpoint that receives form submissions at `<endpoint>/<kind>`. When unset, forms open a pre-filled email | Not set yet. To use it in production, add it to the workflow's `env:` and as a repository variable |
 | `VITE_CONTACT_EMAIL` | Address for the email fallback (default `hello@upset.live`) | Optional |
+| `VITE_CHECKOUT_ENDPOINT` | The checkout Worker's address. When unset, the site shows no Buy buttons | `.env.local` (`http://localhost:8787` with `wrangler dev`); repository **variable** for the deploy (the workflow already passes it) |
+
+The checkout Worker's own secrets (Stripe keys, its Directus token) live in Cloudflare, never in this repo or a
+`VITE_*` variable. See [Checkout](#checkout).
 
 Directus's own settings (CORS, storage, mail and so on) are Heroku config vars on the Directus app, not variables of
 this repo.
@@ -80,6 +89,26 @@ The planned endpoint, for example a Cloudflare Worker, should:
 
 The Public role must never get create access to those collections.
 
+## Checkout
+
+Payments run through a Cloudflare Worker in `workers/checkout` and Stripe's hosted checkout page. Its
+[README](../workers/checkout/README.md) has the setup commands, settings and local testing steps.
+
+- **What it needs.** A Stripe account (live mode activated, receipts on), the Worker deployed with three secrets
+  (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `DIRECTUS_TOKEN`), a Stripe webhook for `checkout.session.expired`
+  pointing at `<worker>/stripe-webhook`, and the repository variable `VITE_CHECKOUT_ENDPOINT`.
+- **Directus.** The Public role must read `price` and `inventory` on open items, and the Worker's token comes from a
+  `checkout-worker` user holding only the **Checkout Worker** policy (read open items; update `inventory` only). See
+  [Directus](directus.md).
+- **Stock.** Starting a checkout takes each basket line's quantity off `inventory` (all lines or none); an abandoned
+  checkout puts it back after about 31 minutes, or within seconds if the buyer changes their basket and checks out
+  again (the site asks the Worker to cancel the old checkout). The update only applies if nobody changed the stock in between, so two buyers can't take the last unit. If
+  something fails halfway, stock ends up too low (the site says "Sold out"), never too high.
+- **Orders** are in the Stripe Dashboard, with the delivery address. Refunds are made there too. A refund doesn't put
+  the unit back: change `inventory` in Directus by hand if the item returns to stock.
+- **Basket limits:** 10 different items, 10 of each, per checkout.
+- **Not built yet:** automatic order records in Directus.
+
 ## Troubleshooting the live site
 
 | Symptom | Likely cause | Check |
@@ -95,6 +124,9 @@ The Public role must never get create access to those collections.
 | An image doesn't show | No image set, the file isn't attached to a published record, or a storage error | Open the `/assets/<id>` URL directly while logged out |
 | Images show but without the glow/dither effect | CORS header missing for that origin | `CORS_ORIGIN` includes the site's origin |
 | A link to a record 404s | Unusual slug and a link built without `recordPath` | Fix the link in code, and give the record a clean slug in Directus |
+| No "Add to basket" on an item | No price, no stock, status not Available, or the site built without `VITE_CHECKOUT_ENDPOINT` | The item in Directus; the repository variable; redeploy after setting it |
+| "Checkout couldn't start" | Worker down, a missing Worker secret, or the Directus token refused | `npx wrangler tail` in `workers/checkout`; the Worker's secrets; the checkout-worker user and its policy |
+| An item says "Sold out" but there's stock | Someone is at checkout (clears within ~31 minutes), or a hold wasn't released | The Stripe Dashboard for open or expired checkouts; then correct `inventory` in Directus |
 
 ## Costs and renewals
 

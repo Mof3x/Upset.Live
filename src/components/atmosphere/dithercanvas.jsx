@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { applyEdgeDiffuseOverlay } from "./edgeDiffuse";
 
-export default function DitherCanvas({ id, src, ...props }) {
+export default function DitherCanvas({ id, src, className = "", ...props }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -12,15 +12,31 @@ export default function DitherCanvas({ id, src, ...props }) {
     img.crossOrigin = "anonymous";
     img.src = src;
 
+    let drawnWidth = 0;
+    let drawnHeight = 0;
+
     const draw = () => {
       if (!img.naturalWidth) return;
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       const rect = canvas.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
       const dpr = window.devicePixelRatio || 1;
+      const pixelWidth = Math.round(rect.width * dpr);
+      const pixelHeight = Math.round(rect.height * dpr);
+      // The ResizeObserver also fires after our own resize; nothing to do if the size is unchanged.
+      if (pixelWidth === drawnWidth && pixelHeight === drawnHeight) return;
 
-      canvas.width = Math.round(rect.width * dpr);
-      canvas.height = Math.round(rect.height * dpr);
+      canvas.width = pixelWidth;
+      canvas.height = pixelHeight;
+      // A canvas without its own CSS size takes its box from these pixel sizes, so on a high-density
+      // screen it would grow by devicePixelRatio on every redraw and freeze the page. Pin it instead.
+      const after = canvas.getBoundingClientRect();
+      if (Math.abs(after.width - rect.width) > 1 || Math.abs(after.height - rect.height) > 1) {
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+      }
+      drawnWidth = pixelWidth;
+      drawnHeight = pixelHeight;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const targetAspect = rect.width / rect.height;
@@ -90,11 +106,6 @@ export default function DitherCanvas({ id, src, ...props }) {
 
       ctx.putImageData(imageData, 0, 0);
 
-      ctx.fillStyle = "rgba(17, 9, 9, 0.25)";
-      for (let y = 0; y < canvas.height; y += 3) {
-        ctx.fillRect(0, y, canvas.width, 1);
-      }
-
       // Reuse the exact same edge treatment so this canvas matches the hero image.
       applyEdgeDiffuseOverlay(canvas, 1);
 
@@ -150,5 +161,6 @@ export default function DitherCanvas({ id, src, ...props }) {
 
   }, [src]);
 
-  return <canvas ref={ref} id={id} className="DitherCanvas" {...props} />;
+  // Keep the base class (it carries the canvas's size and mask) when a caller adds its own.
+  return <canvas ref={ref} id={id} className={["DitherCanvas", className].filter(Boolean).join(" ")} {...props} />;
 }
