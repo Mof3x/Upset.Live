@@ -11,7 +11,11 @@ browser reads content straight from the Directus API (see [Data layer](data-laye
 3. `src/components/layout/SiteShell.jsx` renders the persistent atmosphere and frame:
    - a `Noise` canvas layer behind everything;
    - the `vault66-crt-effect` CRT overlay (sweep line, glow, edge glow; its scanlines are turned off);
-   - `Navbar`, the routed page inside `<main class="site-content">`, and `Footer`.
+   - `HubHeader` (logo, "Pick an artist" strip, section tabs, "On now" ticker and the Noise button), the routed page
+     inside `<main class="site-content">`, and `Footer`. `Navbar.jsx` is the previous header, kept but unused.
+
+The Noise button steps the background noise through High, Medium and Low (`lib/noiseLevel.js`); the choice is kept
+in the visitor's localStorage (`upset-noise-v1`).
 
 The shell stays mounted while you move between pages. Always navigate with React Router's `<Link>` (or `TextLink`):
 a plain `<a href>` to an internal page reloads the app and restarts every canvas effect.
@@ -67,7 +71,7 @@ Notes on specific routes:
   the Directus `commission_types` collection, its names and slugs are used instead, and the descriptions stay local.
 - **Ethos** shows the published Directus text whose slug is `ethos`. Editors change the ethos page by editing that text.
 - **About** and the homepage quote are hard-coded in the page components.
-- **Navigation** is hard-coded in `Navbar.jsx` and `Footer.jsx`. `getNavigation()` in `queries.js` reads
+- **Navigation** is hard-coded in `lib/sections.js` (header tabs, footer links, page icons). `getNavigation()` in `queries.js` reads
   `navigation_items`, but nothing uses it yet. The footer reads its statement and social links from `site_settings`.
 
 ## Pages and states
@@ -96,7 +100,8 @@ visitors see on sections the public can't read yet.
 | `cards/` | `WorkCard`, `ArtistCard` (takes `basePath`, so it also renders contributors), `TextCard`, `EntryCard` (journal and other editorial lists), `VaultItemCard` |
 | `forms/` | `EnquiryForm` (config-driven fields, validation, honeypot, sending/sent/error states) and `NewsletterForm` |
 | `basket/` | `BasketProvider` (the basket for the whole site, mounted in the shell, saved in localStorage) and `AddToBasket` (price, stock note, quantity and "Add to basket" on item pages) |
-| `layout/` | `SiteShell`, `Navbar`, `Footer`, `CardGrid` (responsive grid; the `min` prop sets the minimum card width), `PageIntro` and `DetailHeader`, `PageState` |
+| `hub/` | The homepage hub layout: `Scene` (the scrolling street of billboards; `SCENE_BACKDROP` takes a render), `Dice` (random pick), `HubIcon` (line icons standing in for renders), `HubParts` (`HubHeading`, `GoLink`, `HubMedia`, `PlayButton`, `RankedList`) |
+| `layout/` | `SiteShell`, `HubHeader`, `Navbar` (unused), `Footer`, `CardGrid` (responsive grid; the `min` prop sets the minimum card width), `PageIntro` and `DetailHeader`, `PageState` |
 | `rails/` | `RelatedRail`, a titled list of links to related records |
 | `ui/` | `Prose` (renders paragraph arrays, with a fallback), `MediaFrame` (fixed aspect ratio image frame), `MetaLine`, `TagList`, `TextLink` (internal `Link` or external `<a>` with an optional arrow), `SectionHeading`, `CategoryNav` (filter buttons), `ContentState` |
 

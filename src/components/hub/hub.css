@@ -1,0 +1,146 @@
+/* Shared pieces of the hub layout: headings, buttons, media slots and numbered lists. All unfilled. */
+.hub-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 0 0 1.5rem;
+  font-size: clamp(2rem, 4.5vw, 3.2rem);
+  line-height: 1;
+  text-align: left;
+}
+
+.hub-heading__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.4em;
+  height: 1.4em;
+  border: 1px solid var(--hub-line);
+  box-shadow: 0 0 12px var(--hub-glow-soft);
+}
+
+.hub-heading__icon .hub-icon {
+  width: 0.8em;
+  height: 0.8em;
+}
+
+/* "Go ▸" and the play button: outlined, filled on hover. */
+.hub-go,
+.hub-play {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.9rem;
+  border: 1px solid var(--hub-line);
+  background: transparent;
+  color: var(--hub-paper) !important;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-style: italic;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.hub-go:hover,
+.hub-play:hover {
+  background: var(--hub-paper);
+  color: var(--hub-ink) !important;
+  box-shadow: 0 0 12px var(--hub-glow);
+}
+
+.hub-go:focus-visible,
+.hub-play:focus-visible {
+  outline: 2px solid var(--hub-mint);
+  outline-offset: 2px;
+}
+
+.hub-play .hub-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+/* An image, or the section icon in a dashed frame where an image (or a render) will go. */
+.hub-media {
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--ratio, 4 / 3);
+  object-fit: cover;
+}
+
+.hub-media--empty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.6rem;
+  border: 1px dashed var(--hub-glow-soft);
+  color: rgba(223, 255, 235, 0.5);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.hub-media--empty .hub-icon {
+  width: min(3rem, 30%);
+  height: auto;
+}
+
+/* Numbered lists */
+.hub-ranked {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: hub-rank;
+}
+
+.hub-ranked--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.5rem;
+}
+
+.hub-ranked li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px dotted var(--hub-glow-soft);
+  counter-increment: hub-rank;
+}
+
+.hub-ranked li::before {
+  content: counter(hub-rank);
+  flex: none;
+  width: 1.2rem;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+.hub-ranked a {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--hub-paper);
+  font-size: 1.1rem;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hub-ranked a:hover {
+  text-shadow: 0 0 10px var(--hub-glow);
+}
+
+.hub-ranked__kind {
+  margin-left: auto;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  white-space: nowrap;
+}
+
+.hub-ranked__empty {
+  margin: 0;
+  opacity: 0.7;
+}

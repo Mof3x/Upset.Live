@@ -11,7 +11,7 @@
 //      <article className="hero">
 //       <header>
 //          <h1>UpsetXociety</h1>
-//            <p>Art House</p>
+//            <p>Art Haus</p>
 //       </header>
 //       <div className="hero-image">
 //          <GlowCanvas id="hero-canvas" src="/gor.jpeg" />
@@ -79,127 +79,41 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import GlowCanvas from "../components/atmosphere/glowcanvas";
-import DitherCanvas from "../components/atmosphere/dithercanvas";
 import ContentState from "../components/ui/ContentState";
+import Scene from "../components/hub/Scene";
+import Dice from "../components/hub/Dice";
+import HubIcon from "../components/hub/HubIcon";
+import { HubHeading, HubMedia, RankedList } from "../components/hub/HubParts";
 import { isForbiddenError } from "../lib/directus";
 import { submitForm, validateEnquiry } from "../lib/forms";
 import { usePageTitle } from "../lib/resourceState";
-import { getPublishedArtists, getPublishedWorks } from "../lib/queries";
-import { normalizeArtist, normalizeWork } from "../lib/normalise";
+import {
+  getOpenVaultItems,
+  getPublishedArtists,
+  getPublishedJournalEntries,
+  getPublishedTexts,
+  getPublishedWorks,
+} from "../lib/queries";
+import {
+  normalizeArtist,
+  normalizeJournalEntry,
+  normalizeText,
+  normalizeVaultItem,
+  normalizeWork,
+} from "../lib/normalise";
 import useDirectusResource from "../lib/useDirectusResource";
-import "./HomePage.css";
+import { SHOP_CATEGORY_SLUGS } from "../lib/shop";
 import { recordPath } from "../lib/paths";
+import "./HomePage.css";
+import "./HomeHub.css";
 
-function HeroCard({ hero }) {
-  return (
-    <article className="home-card hero-card">
-      <Link className="hero-card__link" to={hero.href}>
-        <div className="hero-card__content">
-          <p className="eyebrow">{hero.subtitle}</p>
-          <h1>{hero.title}</h1>
-          <span className="text-link">{hero.ctaLabel}</span>
-        </div>
+const quote = {
+  text: "Blackness is lit, don't let anybody tell you it's not.",
+  attribution: "Sylvia Wynter",
+};
 
-        <div className="hero-card__media">
-          <GlowCanvas
-            id="hero-canvas"
-            src={hero.image}
-            alt={hero.imageAlt}
-          />
-        </div>
-      </Link>
-    </article>
-  );
-}
-
-function QuoteCard({ quote }) {
-  return (
-    <article className="home-card quote-card">
-      <blockquote>
-        <p>“{quote.text}”</p>
-        <footer>— {quote.attribution}</footer>
-      </blockquote>
-    </article>
-  );
-}
-
-function ArtistCard({ artist }) {
-  return (
-    <article className="artist-card">
-      <GlowCanvas
-        id="featured-artist"
-        className="artist-card__image"
-        src={artist.image}
-        alt={artist.imageAlt}
-      />
-
-      <div className="artist-card__content">
-        <p className="eyebrow">Featured artist</p>
-        <h3>{artist.name}</h3>
-        {artist.excerpt && <p>{artist.excerpt}</p>}
-        <Link className="text-link" to={recordPath("/artists", artist.slug)}>
-          Meet the artist
-        </Link>
-      </div>
-    </article>
-  );
-}
-
-function FeaturedWorkCard({ work }) {
-  return (
-    <article className="home-card featured-work-card">
-      <header className="card-heading">
-        <p className="eyebrow">{work.eyebrow}</p>
-        <h2>{work.title}</h2>
-      </header>
-
-      <Link
-        className="featured-work-card__media"
-        to={work.href}
-        aria-label={`View ${work.title}`}
-      >
-        <DitherCanvas
-          id="featured-canvas"
-          src={work.image}
-          alt={work.imageAlt}
-        />
-      </Link>
-
-      <div className="featured-work-card__body">
-        <p>{work.excerpt}</p>
-
-        <Link className="text-link" to={work.href}>
-          {work.ctaLabel}
-        </Link>
-      </div>
-
-      {work.artist?.slug && <ArtistCard artist={work.artist} />}
-    </article>
-  );
-}
-
-function WorkCard({ work }) {
-  return (
-    <article className="work-card">
-      <Link to={work.href} className="work-card__link">
-        <GlowCanvas
-          className="work-card__image"
-          src={work.image}
-          alt={work.imageAlt}
-        />
-
-        <div className="work-card__content">
-          <p className="eyebrow">{work.type}</p>
-          <h3>{work.title}</h3>
-          <span className="text-link">Explore</span>
-        </div>
-      </Link>
-    </article>
-  );
-}
-
-function NewsletterCard({ newsletter }) {
+// The email signup in the "Join the haus" column.
+function QuickSignup() {
   const [state, setState] = useState({ status: "idle", message: "" });
 
   async function handleSubmit(event) {
@@ -223,7 +137,7 @@ function NewsletterCard({ newsletter }) {
         window.location.href = result.href;
         setState({ status: "mailto", message: "Your email app should open with the signup ready to send." });
       } else {
-        setState({ status: "sent", message: "You are on the list. Welcome to the house." });
+        setState({ status: "sent", message: "You are on the list. Welcome to the haus." });
       }
     } catch (error) {
       setState({ status: "failed", message: error.message });
@@ -231,123 +145,206 @@ function NewsletterCard({ newsletter }) {
   }
 
   return (
-    <article className="home-card newsletter-card">
-      <div>
-        <p className="eyebrow">Newsletter</p>
-        <h2>{newsletter.title}</h2>
-        <p>{newsletter.body}</p>
-      </div>
-
-      <form className="newsletter-card__form" onSubmit={handleSubmit}>
-        <label className="sr-only" htmlFor="email">
-          Email address
-        </label>
-
-        <input
-          id="email"
-          name="email"
-          autoComplete="email"
-          type="email"
-          placeholder={newsletter.placeholder}
-          required
-        />
-
+    <form className="hub-signup" onSubmit={handleSubmit}>
+      <label htmlFor="hub-signup-email">News, works, releases and archive updates, occasionally.</label>
+      <div className="hub-signup__row">
+        <input id="hub-signup-email" name="email" type="email" autoComplete="email" placeholder="Your email" required />
         <button type="submit" disabled={state.status === "sending"}>
-          {state.status === "sending" ? "Sending…" : newsletter.buttonLabel}
+          {state.status === "sending" ? "Sending…" : "Join"}
         </button>
-      </form>
+      </div>
       <p role="status" aria-live="polite">{state.message}</p>
-    </article>
+    </form>
   );
 }
 
+// Flat shapes for the scene, doors, lists and dice.
+const asWork = (work) => ({
+  key: `work:${work.slug}`,
+  kind: work.type || "Work",
+  icon: "works",
+  title: work.title,
+  to: recordPath("/works", work.slug),
+  image: work.image,
+  imageAlt: work.imageAlt,
+  meta: [work.artist?.name, work.year].filter(Boolean).join(" · "),
+  audio: work.audio,
+});
+const asText = (text) => ({
+  key: `text:${text.slug}`,
+  kind: text.category || "Text",
+  icon: "texts",
+  title: text.title,
+  to: recordPath("/texts", text.slug),
+  image: text.image,
+  imageAlt: text.imageAlt,
+  meta: [text.author?.name, text.date].filter(Boolean).join(" · "),
+  go: "Read",
+});
+const asEntry = (entry) => ({
+  key: `journal:${entry.slug}`,
+  kind: "Journal",
+  icon: "journal",
+  title: entry.title,
+  to: recordPath("/journal", entry.slug),
+  image: entry.image,
+  imageAlt: entry.imageAlt,
+  meta: entry.date,
+  go: "Read",
+});
+const asArtist = (artist) => ({
+  key: `artist:${artist.slug}`,
+  kind: "Artist",
+  icon: "artists",
+  title: artist.name,
+  to: recordPath("/artists", artist.slug),
+  image: artist.image,
+  imageAlt: artist.imageAlt,
+  meta: artist.discipline,
+  go: "Meet",
+});
+const asObject = (item, base) => ({
+  key: `${base}:${item.slug}`,
+  kind: base === "/shop" ? "Shop" : "Vault",
+  icon: base === "/shop" ? "shop" : "vault",
+  title: item.title,
+  to: recordPath(base, item.slug),
+  image: item.image,
+  imageAlt: item.imageAlt,
+  meta: [item.category, item.soldOut ? "Sold out" : item.priceLabel].filter(Boolean).join(" · "),
+  go: "View",
+});
+
+// Section slides, used while there is little content, so the main board always has a few things to show.
+const SECTION_SLIDES = [
+  { key: "section:vault", kind: "The Vault", icon: "vault", title: "Originals, editions and archive objects", to: "/vault", go: "Enter" },
+  { key: "section:razz", kind: "RazzMag", icon: "razz", title: "Issues, features and visual essays", to: "/razz", go: "Read" },
+  { key: "section:commissions", kind: "Bookings", icon: "commissions", title: "Work with the haus", to: "/commissions", go: "Book" },
+];
+
 export default function HomePage() {
-  const { data: works, status: worksStatus, error: worksError } = useDirectusResource(
-    getPublishedWorks,
-    [],
-    normalizeWork
-  );
-  const { data: artists, status: artistsStatus } = useDirectusResource(
-    getPublishedArtists,
-    [],
-    normalizeArtist
-  );
+  const works = useDirectusResource(getPublishedWorks, [], normalizeWork);
+  // Everything else is optional: a source that fails or is empty is simply left out.
+  const artists = useDirectusResource(getPublishedArtists, [], normalizeArtist, "home-artists");
+  const texts = useDirectusResource(getPublishedTexts, [], normalizeText, "home-texts");
+  const journal = useDirectusResource(getPublishedJournalEntries, [], normalizeJournalEntry, "home-journal");
+  const vault = useDirectusResource(getOpenVaultItems, [], normalizeVaultItem, "home-vault");
 
   usePageTitle("");
 
-  // Works drive the page; artists only enrich the featured card.
-  if (worksStatus === "loading") {
+  if (works.status === "loading") {
     return <main className="homepage page-content"><ContentState status="loading" /></main>;
   }
 
-  const featuredRecord = works.find((work) => work.featured) || works[0] || null;
-  const featuredArtist =
-    artistsStatus === "success" && featuredRecord
-      ? artists.find((artist) => artist.slug === featuredRecord.artist?.slug)
-      : null;
-  const featuredWork = featuredRecord && {
-    ...featuredRecord,
-    eyebrow: "Featured work",
-    href: recordPath("/works", featuredRecord.slug),
-    ctaLabel: "View the work",
-    artist: featuredArtist || null,
-  };
-  const hero = {
-    title: "UpsetXociety",
-    subtitle: "Art House",
-    image: featuredRecord?.image || "",
-    imageAlt: featuredRecord?.imageAlt || "",
-    href: featuredRecord ? recordPath("/works", featuredRecord.slug) : "/works",
-    ctaLabel: "Enter the archive",
-  };
-  const relatedWorks = works
-    .filter((work) => work.slug !== featuredRecord?.slug)
-    .slice(0, 4)
-    .map((work) => ({
-      ...work,
-      href: recordPath("/works", work.slug),
-    }));
-  const quote = {
-    text: "Blackness is lit, don't let anybody tell you it's not.",
-    attribution: "Sylvia Wynter",
-  };
-  const newsletter = {
-    title: "Stay connected",
-    body: "News, works, releases and archive updates--occasionally.",
-    placeholder: "Enter your email",
-    buttonLabel: "Subscribe",
-  };
+  const ok = (resource) => (resource.status === "success" ? resource.data : []);
+  const featured = ok(works).find((work) => work.featured);
+  const workItems = [featured, ...ok(works).filter((work) => work !== featured)].filter(Boolean).map(asWork);
+  const textItems = ok(texts).map(asText);
+  const entryItems = ok(journal).map(asEntry);
+  const artistItems = ok(artists).map(asArtist);
+  const openItems = ok(vault);
+  const shopItems = openItems.filter((item) => SHOP_CATEGORY_SLUGS.includes(item.categorySlug));
+  const shopPick = shopItems.find((item) => item.buyable) || shopItems[0];
+  const shop = shopPick ? asObject(shopPick, "/shop") : null;
+  const vaultItems = openItems
+    .filter((item) => !SHOP_CATEGORY_SLUGS.includes(item.categorySlug))
+    .map((item) => asObject(item, "/vault"));
+  const listen = workItems.find((item) => item.audio) || null;
+  const reads = [...textItems, ...entryItems];
+
+  // Main board: works with pictures first, then the newest read, then sections to make it up to three.
+  const slides = [...workItems.filter((item) => item.image).slice(0, 4), ...reads.slice(0, 1)];
+  slides.push(...SECTION_SLIDES.slice(0, Math.max(0, 3 - slides.length)));
+
+  const onNow = [workItems[0], reads[0], artistItems[0], shop, vaultItems[0]].filter(Boolean).slice(0, 4);
+  if (onNow.length < 3) onNow.push(...SECTION_SLIDES.slice(0, 3 - onNow.length));
+
+  // Further along the street: artists, reads and Vault pieces, then a few sections that are always there.
+  const streetMore = [
+    ...artistItems,
+    ...reads.slice(0, 3),
+    ...vaultItems.slice(0, 2),
+    SECTION_SLIDES[1],
+    ...(shop && !vaultItems.length ? [SECTION_SLIDES[0]] : []),
+    { key: "section:journal", kind: "Journal", icon: "journal", title: "Notes and updates from the haus", to: "/journal", go: "Read" },
+    { key: "section:newsletter", kind: "Newsletter", icon: "newsletter", title: "Join the haus", meta: "News, works and releases, occasionally", to: "/newsletter", go: "Join" },
+  ];
+
+  // The doors: every section, pictured by its newest item where there is one.
+  const firstImage = (items) => items.find((item) => item.image)?.image || "";
+  const doors = [
+    { to: "/works", label: "Works", icon: "works", image: firstImage(workItems), count: workItems.length },
+    { to: "/artists", label: "Artists", icon: "artists", image: firstImage(artistItems), count: artistItems.length },
+    { to: "/texts", label: "Texts", icon: "texts", image: firstImage(textItems), count: textItems.length },
+    { to: "/journal", label: "Journal", icon: "journal", image: firstImage(entryItems), count: entryItems.length },
+    { to: "/razz", label: "RazzMag", icon: "razz", image: "" },
+    { to: "/vault", label: "Vault", icon: "vault", image: firstImage(vaultItems) },
+    { to: "/shop", label: "Shop", icon: "shop", image: shop?.image || "" },
+    { to: "/commissions", label: "Bookings", icon: "commissions", image: "" },
+  ];
 
   return (
-    <main className="homepage page-content">
-      <HeroCard hero={hero} />
+    <main className="homepage page-content hub-home">
+      <Scene slides={slides} onNow={onNow} listen={listen} shop={shop} more={streetMore} />
 
-      <section className="homepage__content">
-        <QuoteCard quote={quote} />
+      {works.status === "error" && (
+        <ContentState status={isForbiddenError(works.error) ? "closed" : "error"} />
+      )}
 
-        {worksStatus === "error" && (
-          <ContentState status={isForbiddenError(worksError) ? "closed" : "error"} />
-        )}
-
-        {featuredWork && <FeaturedWorkCard work={featuredWork} />}
-
-        {relatedWorks.length > 0 && (
-          <section className="related-works-section" aria-labelledby="related-title">
-            <header className="card-heading">
-              <p className="eyebrow">Continue exploring</p>
-              <h2 id="related-title">Related works</h2>
-            </header>
-
-            <div className="related-works-grid">
-              {relatedWorks.map((work) => (
-                <WorkCard key={work.slug} work={work} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        <NewsletterCard newsletter={newsletter} />
+      <section className="hub-home__section" aria-labelledby="hub-explore">
+        <HubHeading icon="home">
+          <span id="hub-explore">Explore the haus</span>
+        </HubHeading>
+        <ul className="hub-doors">
+          {doors.map((door) => (
+            <li key={door.to}>
+              <Link to={door.to} className="hub-door">
+                <span className="hub-door__frame">
+                  <HubMedia image={door.image} icon={door.icon} />
+                </span>
+                <span className="hub-door__label">
+                  {door.label}
+                  {door.count > 0 && <span className="hub-door__count">{door.count}</span>}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
+
+      <Dice pool={[...workItems, ...reads, ...artistItems, ...(shop ? [shop] : []), ...vaultItems]} />
+
+      <section className="hub-home__columns" aria-label="Newest and join">
+        <div className="hub-column">
+          <h2 className="hub-column__title">
+            Newest works <Link to="/works">All ›</Link>
+          </h2>
+          <RankedList items={workItems.slice(0, 8)} empty="New works arriving soon." />
+        </div>
+        <div className="hub-column">
+          <h2 className="hub-column__title">
+            Newest reads <Link to="/texts">All ›</Link>
+          </h2>
+          <RankedList items={reads.slice(0, 8)} empty="Texts and journal entries arriving soon." />
+        </div>
+        <div className="hub-column">
+          <h2 className="hub-column__title">Join the haus</h2>
+          <QuickSignup />
+          <p className="hub-column__links">
+            <Link to="/commissions">Bookings + commissions ›</Link>
+            <Link to="/contact">Say hello ›</Link>
+          </p>
+        </div>
+      </section>
+
+      <blockquote className="hub-quote">
+        <p>&ldquo;{quote.text}&rdquo;</p>
+        <footer>{quote.attribution}</footer>
+      </blockquote>
+
+      <Link to="/works" className="hub-bigpill">
+        Enter the archive <HubIcon name="play" />
+      </Link>
     </main>
   );
 }

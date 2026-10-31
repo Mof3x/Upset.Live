@@ -13,7 +13,7 @@ export default function NewsletterForm({ context }) {
       kind="newsletter"
       subject="UpsetXociety: newsletter signup"
       submitLabel="Subscribe"
-      successMessage="You are on the list. Welcome to the house."
+      successMessage="You are on the list. Welcome to the haus."
       initialValues={context ? { interest: context } : {}}
       fields={[
         { name: "email", label: "Email address", type: "email", required: true, autoComplete: "email" },

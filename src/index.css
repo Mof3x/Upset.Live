@@ -53,6 +53,21 @@ html, body {
   - The horizontal gradient fades the left and right edges.
   - Intersecting them gives a true four-edge fade instead of a center vignette.
 */
+/*
+  Hub layout tokens: the site palette (black, aliceblue-white text, mint glow) under one set of names,
+  shared by the header, footer, homepage and page banners.
+*/
+:root {
+  --hub-ink: #000;
+  --hub-paper: #f8f1f1;
+  --hub-mint: #dfffeb;
+  --hub-glow: rgba(223, 255, 235, 0.7);
+  --hub-glow-soft: rgba(223, 255, 235, 0.28);
+  --hub-line: rgba(223, 255, 235, 0.75);
+  /* No fills: modules are outlines only, so the noise and CRT glow always show through. */
+  --hub-glass: transparent;
+}
+
 :root {
   --crt-edge-mask-vertical: linear-gradient(
     to bottom,

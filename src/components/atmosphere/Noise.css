@@ -5,4 +5,17 @@
   width: 100vw;
   height: 100vh;
   pointer-events: none;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+/* Noise levels (the header's Noise button, see lib/noiseLevel.js). High is the original sharp grain;
+   the lower levels draw it smoothed, slightly blurred and fainter. */
+[data-noise="medium"] .noise-overlay {
+  opacity: 0.6;
+  filter: blur(0.5px);
+}
+
+[data-noise="low"] .noise-overlay {
+  opacity: 0.3;
+  filter: blur(1px);
 }
