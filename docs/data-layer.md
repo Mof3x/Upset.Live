@@ -213,7 +213,7 @@ For example, to show a new Directus collection `events` on `/events`:
    through `getMediaUrl()`/`getMediaAlt()`.
 5. **Page.** Add the list and detail components (a new `EventPages.jsx`, or an existing section file). Use
    `useDirectusResource`, `gateStatus`, `PageState`, `usePageTitle`, and the existing cards and `CardGrid`.
-6. **Route.** Register both routes in `App.jsx`, and add navigation links in `Navbar.jsx`/`Footer.jsx` if needed.
+6. **Route.** Register both routes in `App.jsx`, and add the section to `lib/sections.js` if it needs a tab and footer link.
 7. **Links.** Use `recordPath("/events", slug)` everywhere.
 8. **Check.** Run `npm run lint` and `npm run build`, then open the pages with `npm run dev` against the live CMS:
    published, unpublished, unknown slug, and a slug with a space.

@@ -112,7 +112,7 @@ function ShopListing({ categorySlug }) {
       <PageIntro
         eyebrow={active ? "Shop" : "Editions"}
         title={active ? active.name : "Shop"}
-        description="Prints, publications, posters, apparel and releases from the house. Each edition opens with its story first."
+        description="Prints, publications, posters, apparel and releases from the haus. Each edition opens with its story first."
       />
       <CategoryNav
         label="Shop categories"

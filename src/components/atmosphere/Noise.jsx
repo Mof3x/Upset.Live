@@ -6,7 +6,8 @@ const Noise = ({
   patternScaleX = 1,
   patternScaleY = 1,
   patternRefreshInterval = 2,
-  patternAlpha = 15
+  patternAlpha = 15,
+  pixelated = true
 }) => {
   const grainRef = useRef(null);
 
@@ -64,7 +65,7 @@ const Noise = ({
     };
   }, [patternSize, patternScaleX, patternScaleY, patternRefreshInterval, patternAlpha]);
 
-  return <canvas className="noise-overlay" ref={grainRef} style={{ imageRendering: 'pixelated' }} />;
+  return <canvas className="noise-overlay" ref={grainRef} style={{ imageRendering: pixelated ? 'pixelated' : 'auto' }} />;
 };
 
 export default Noise;

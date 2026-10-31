@@ -3,7 +3,7 @@ import "./ContentState.css";
 
 const stateCopy = {
   loading: {
-    title: "Loading the archive",
+    title: "Conjuring",
     message: "The next record is coming into focus.",
   },
   error: {

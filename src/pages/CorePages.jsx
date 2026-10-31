@@ -50,8 +50,8 @@ export function AboutPage() {
     <main className="core-page page-content">
       <PageIntro
         eyebrow="About"
-        title="A living house for image, sound and thought."
-        description="UpsetXociety is an independent art-house archive bringing visual art, music, writing and collective memory into the same room."
+        title="A living haus for image, sound and thought."
+        description="UpsetXociety is an independent art-haus archive bringing visual art, music, writing and collective memory into the same room."
       />
 
       <section className="core-page__prose">
@@ -95,7 +95,7 @@ export function EthosPage() {
       <PageIntro
         eyebrow="About / Ethos"
         title={text?.title || "African Gothic"}
-        description={text ? "" : "The ethos of the house."}
+        description={text ? "" : "The ethos of the haus."}
       />
       <Prose
         className="core-page__prose"

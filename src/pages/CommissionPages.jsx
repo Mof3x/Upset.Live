@@ -47,7 +47,7 @@ const DISCIPLINES = [
   {
     slug: "editorial-collaboration",
     name: "Editorial Collaboration",
-    description: "Features, interviews and collaborations with Razz and the wider house.",
+    description: "Features, interviews and collaborations with Razz and the wider haus.",
   },
 ];
 
@@ -72,7 +72,7 @@ export function CommissionsPage() {
     <main className="core-page page-content">
       <PageIntro
         eyebrow="Bookings + Commissions"
-        title="Work with the house."
+        title="Work with the haus."
         description="Commissions and collaborations are personal and selective. Choose a discipline to see past work and start a brief."
       />
       <div className="core-page__list">

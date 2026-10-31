@@ -11,7 +11,7 @@
 //      <article className="hero">
 //       <header>
 //          <h1>UpsetXociety</h1>
-//            <p>Art House</p>
+//            <p>Art Haus</p>
 //       </header>
 //       <div className="hero-image">
 //          <GlowCanvas id="hero-canvas" src="/gor.jpeg" />
@@ -79,9 +79,11 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import GlowCanvas from "../components/atmosphere/glowcanvas";
-import DitherCanvas from "../components/atmosphere/dithercanvas";
 import ContentState from "../components/ui/ContentState";
+import Scene from "../components/hub/Scene";
+import Dice from "../components/hub/Dice";
+import HubIcon from "../components/hub/HubIcon";
+import { HubHeading, HubMedia, RankedList } from "../components/hub/HubParts";
 import { isForbiddenError } from "../lib/directus";
 import { submitForm, validateEnquiry } from "../lib/forms";
 import { usePageTitle } from "../lib/resourceState";
@@ -101,88 +103,17 @@ import {
 } from "../lib/normalise";
 import useDirectusResource from "../lib/useDirectusResource";
 import { SHOP_CATEGORY_SLUGS } from "../lib/shop";
-import "./HomePage.css";
-import "./HomePortal.css";
 import { recordPath } from "../lib/paths";
+import "./HomePage.css";
+import "./HomeHub.css";
 
-function HeroCard({ hero }) {
-  return (
-    <article className="home-card hero-card">
-      <Link className="hero-card__link" to={hero.href}>
-        <div className="hero-card__content">
-          <p className="eyebrow">{hero.subtitle}</p>
-          <h1>{hero.title}</h1>
-          <span className="text-link">{hero.ctaLabel}</span>
-        </div>
+const quote = {
+  text: "Blackness is lit, don't let anybody tell you it's not.",
+  attribution: "Sylvia Wynter",
+};
 
-        <div className="hero-card__media">
-          <GlowCanvas
-            id="hero-canvas"
-            src={hero.image}
-            alt={hero.imageAlt}
-          />
-        </div>
-      </Link>
-    </article>
-  );
-}
-
-function QuoteCard({ quote }) {
-  return (
-    <article className="home-card quote-card">
-      <blockquote>
-        <p>“{quote.text}”</p>
-        <footer>— {quote.attribution}</footer>
-      </blockquote>
-    </article>
-  );
-}
-
-function ArtistCard({ artist }) {
-  return (
-    <article className="artist-card">
-      {artist.image && (
-        <GlowCanvas
-          id="featured-artist"
-          className="artist-card__image"
-          src={artist.image}
-          alt={artist.imageAlt}
-        />
-      )}
-
-      <div className="artist-card__content">
-        <p className="eyebrow">Featured artist</p>
-        <h3>{artist.name}</h3>
-        {artist.excerpt && <p>{artist.excerpt}</p>}
-        <Link className="text-link" to={recordPath("/artists", artist.slug)}>
-          Meet the artist
-        </Link>
-      </div>
-    </article>
-  );
-}
-
-function WorkCard({ work }) {
-  return (
-    <article className="work-card">
-      <Link to={work.href} className="work-card__link">
-        <GlowCanvas
-          className="work-card__image"
-          src={work.image}
-          alt={work.imageAlt}
-        />
-
-        <div className="work-card__content">
-          <p className="eyebrow">{work.type}</p>
-          <h3>{work.title}</h3>
-          <span className="text-link">Explore</span>
-        </div>
-      </Link>
-    </article>
-  );
-}
-
-function NewsletterCard({ newsletter }) {
+// The email signup in the "Join the haus" column.
+function QuickSignup() {
   const [state, setState] = useState({ status: "idle", message: "" });
 
   async function handleSubmit(event) {
@@ -206,7 +137,7 @@ function NewsletterCard({ newsletter }) {
         window.location.href = result.href;
         setState({ status: "mailto", message: "Your email app should open with the signup ready to send." });
       } else {
-        setState({ status: "sent", message: "You are on the list. Welcome to the house." });
+        setState({ status: "sent", message: "You are on the list. Welcome to the haus." });
       }
     } catch (error) {
       setState({ status: "failed", message: error.message });
@@ -214,315 +145,206 @@ function NewsletterCard({ newsletter }) {
   }
 
   return (
-    <article className="home-card newsletter-card">
-      <div>
-        {newsletter.title && (
-          <>
-            <p className="eyebrow">Newsletter</p>
-            <h2>{newsletter.title}</h2>
-          </>
-        )}
-        <p>{newsletter.body}</p>
-      </div>
-
-      <form className="newsletter-card__form" onSubmit={handleSubmit}>
-        <label className="sr-only" htmlFor="email">
-          Email address
-        </label>
-
-        <input
-          id="email"
-          name="email"
-          autoComplete="email"
-          type="email"
-          placeholder={newsletter.placeholder}
-          required
-        />
-
+    <form className="hub-signup" onSubmit={handleSubmit}>
+      <label htmlFor="hub-signup-email">News, works, releases and archive updates, occasionally.</label>
+      <div className="hub-signup__row">
+        <input id="hub-signup-email" name="email" type="email" autoComplete="email" placeholder="Your email" required />
         <button type="submit" disabled={state.status === "sending"}>
-          {state.status === "sending" ? "Sending…" : newsletter.buttonLabel}
+          {state.status === "sending" ? "Sending…" : "Join"}
         </button>
-      </form>
+      </div>
       <p role="status" aria-live="polite">{state.message}</p>
-    </article>
+    </form>
   );
 }
 
-// ---- Portal layout (early-2000s portal: side columns, a hero and a "Today on" panel) ----
+// Flat shapes for the scene, doors, lists and dice.
+const asWork = (work) => ({
+  key: `work:${work.slug}`,
+  kind: work.type || "Work",
+  icon: "works",
+  title: work.title,
+  to: recordPath("/works", work.slug),
+  image: work.image,
+  imageAlt: work.imageAlt,
+  meta: [work.artist?.name, work.year].filter(Boolean).join(" · "),
+  audio: work.audio,
+});
+const asText = (text) => ({
+  key: `text:${text.slug}`,
+  kind: text.category || "Text",
+  icon: "texts",
+  title: text.title,
+  to: recordPath("/texts", text.slug),
+  image: text.image,
+  imageAlt: text.imageAlt,
+  meta: [text.author?.name, text.date].filter(Boolean).join(" · "),
+  go: "Read",
+});
+const asEntry = (entry) => ({
+  key: `journal:${entry.slug}`,
+  kind: "Journal",
+  icon: "journal",
+  title: entry.title,
+  to: recordPath("/journal", entry.slug),
+  image: entry.image,
+  imageAlt: entry.imageAlt,
+  meta: entry.date,
+  go: "Read",
+});
+const asArtist = (artist) => ({
+  key: `artist:${artist.slug}`,
+  kind: "Artist",
+  icon: "artists",
+  title: artist.name,
+  to: recordPath("/artists", artist.slug),
+  image: artist.image,
+  imageAlt: artist.imageAlt,
+  meta: artist.discipline,
+  go: "Meet",
+});
+const asObject = (item, base) => ({
+  key: `${base}:${item.slug}`,
+  kind: base === "/shop" ? "Shop" : "Vault",
+  icon: base === "/shop" ? "shop" : "vault",
+  title: item.title,
+  to: recordPath(base, item.slug),
+  image: item.image,
+  imageAlt: item.imageAlt,
+  meta: [item.category, item.soldOut ? "Sold out" : item.priceLabel].filter(Boolean).join(" · "),
+  go: "View",
+});
 
-function Panel({ title, className = "", children }) {
-  return (
-    <section className={`portal-panel ${className}`.trim()}>
-      <h2 className="portal-panel__title">{title}</h2>
-      <div className="portal-panel__body">{children}</div>
-    </section>
-  );
-}
-
-function MoreLink({ to, children }) {
-  return (
-    <Link to={to} className="portal-more">
-      {children} <span aria-hidden="true">»</span>
-    </Link>
-  );
-}
-
-// One section of "Today on UpsetXociety": a labelled bar with a "More" pill, then one item with a Go button.
-function TodayRow({ label, more, item }) {
-  return (
-    <article className="portal-today__row">
-      <div className="portal-today__bar">
-        <h3>{label}</h3>
-        <MoreLink to={more.to}>{more.label}</MoreLink>
-      </div>
-      <div className={`portal-today__item${item.media ? " portal-today__item--media" : ""}`}>
-        {item.media && (
-          <Link to={item.to} className="portal-today__media" aria-label={`Open ${item.title}`}>
-            {item.media}
-          </Link>
-        )}
-        <div className="portal-today__text">
-          {item.meta && <p className="portal-today__meta">{item.meta}</p>}
-          <h4>
-            <Link to={item.to}>{item.title}</Link>
-          </h4>
-          {item.excerpt && <p>{item.excerpt}</p>}
-          <Link to={item.to} className="portal-go">
-            {item.go || "Go"} ›
-          </Link>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function ShopPanel({ item }) {
-  const to = recordPath("/shop", item.slug);
-  return (
-    <Panel title="From the Shop" className="portal-shop">
-      {item.image && (
-        <Link to={to} className="portal-shop__media" aria-label={`View ${item.title}`}>
-          <img src={item.image} alt={item.imageAlt || item.title} loading="lazy" />
-        </Link>
-      )}
-      <p className="portal-today__meta">{[item.category, item.soldOut ? "Sold out" : item.priceLabel].filter(Boolean).join(" · ")}</p>
-      <h3 className="portal-shop__title">
-        <Link to={to}>{item.title}</Link>
-      </h3>
-      {item.excerpt && <p>{item.excerpt}</p>}
-      <Link to={to} className="portal-go">
-        View ›
-      </Link>
-      <MoreLink to="/shop">Visit the Shop</MoreLink>
-    </Panel>
-  );
-}
+// Section slides, used while there is little content, so the main board always has a few things to show.
+const SECTION_SLIDES = [
+  { key: "section:vault", kind: "The Vault", icon: "vault", title: "Originals, editions and archive objects", to: "/vault", go: "Enter" },
+  { key: "section:razz", kind: "RazzMag", icon: "razz", title: "Issues, features and visual essays", to: "/razz", go: "Read" },
+  { key: "section:commissions", kind: "Bookings", icon: "commissions", title: "Work with the haus", to: "/commissions", go: "Book" },
+];
 
 export default function HomePage() {
-  const { data: works, status: worksStatus, error: worksError } = useDirectusResource(
-    getPublishedWorks,
-    [],
-    normalizeWork
-  );
-  const { data: artists, status: artistsStatus } = useDirectusResource(
-    getPublishedArtists,
-    [],
-    normalizeArtist
-  );
-  // Secondary panels: each is optional and simply hidden if its source fails or is empty.
+  const works = useDirectusResource(getPublishedWorks, [], normalizeWork);
+  // Everything else is optional: a source that fails or is empty is simply left out.
+  const artists = useDirectusResource(getPublishedArtists, [], normalizeArtist, "home-artists");
   const texts = useDirectusResource(getPublishedTexts, [], normalizeText, "home-texts");
   const journal = useDirectusResource(getPublishedJournalEntries, [], normalizeJournalEntry, "home-journal");
   const vault = useDirectusResource(getOpenVaultItems, [], normalizeVaultItem, "home-vault");
-  const [heroIndex, setHeroIndex] = useState(0);
 
   usePageTitle("");
 
-  // Works drive the page; artists only enrich the featured card.
-  if (worksStatus === "loading") {
+  if (works.status === "loading") {
     return <main className="homepage page-content"><ContentState status="loading" /></main>;
   }
 
-  const featuredRecord = works.find((work) => work.featured) || works[0] || null;
-  const featuredArtist =
-    artistsStatus === "success" && featuredRecord
-      ? artists.find((artist) => artist.slug === featuredRecord.artist?.slug)
-      : null;
+  const ok = (resource) => (resource.status === "success" ? resource.data : []);
+  const featured = ok(works).find((work) => work.featured);
+  const workItems = [featured, ...ok(works).filter((work) => work !== featured)].filter(Boolean).map(asWork);
+  const textItems = ok(texts).map(asText);
+  const entryItems = ok(journal).map(asEntry);
+  const artistItems = ok(artists).map(asArtist);
+  const openItems = ok(vault);
+  const shopItems = openItems.filter((item) => SHOP_CATEGORY_SLUGS.includes(item.categorySlug));
+  const shopPick = shopItems.find((item) => item.buyable) || shopItems[0];
+  const shop = shopPick ? asObject(shopPick, "/shop") : null;
+  const vaultItems = openItems
+    .filter((item) => !SHOP_CATEGORY_SLUGS.includes(item.categorySlug))
+    .map((item) => asObject(item, "/vault"));
+  const listen = workItems.find((item) => item.audio) || null;
+  const reads = [...textItems, ...entryItems];
 
-  // The hero cycles through up to five works that have an image ("Next movie 1 2 3 4 5").
-  const heroWorks = [featuredRecord, ...works.filter((work) => work !== featuredRecord)].filter((work) => work?.image).slice(0, 5);
-  const heroRecord = heroWorks[heroIndex % Math.max(heroWorks.length, 1)] || featuredRecord;
-  const hero = {
-    title: "UpsetXociety",
-    subtitle: "Art House",
-    image: heroRecord?.image || "",
-    imageAlt: heroRecord?.imageAlt || "",
-    href: heroRecord ? recordPath("/works", heroRecord.slug) : "/works",
-    ctaLabel: "Enter the archive",
-  };
-  const relatedWorks = works
-    .filter((work) => work.slug !== featuredRecord?.slug)
-    .slice(0, 4)
-    .map((work) => ({
-      ...work,
-      href: recordPath("/works", work.slug),
-    }));
-  const musicWork = works.find((work) => work.audio && work.slug !== featuredRecord?.slug) || works.find((work) => work.audio);
-  const latestText = texts.status === "success" ? texts.data[0] : null;
-  const latestEntry = journal.status === "success" ? journal.data[0] : null;
-  const shopItem =
-    vault.status === "success"
-      ? vault.data.find((item) => SHOP_CATEGORY_SLUGS.includes(item.categorySlug) && item.buyable) ||
-        vault.data.find((item) => SHOP_CATEGORY_SLUGS.includes(item.categorySlug))
-      : null;
-  const quote = {
-    text: "Blackness is lit, don't let anybody tell you it's not.",
-    attribution: "Sylvia Wynter",
-  };
-  const newsletter = {
-    title: "",
-    body: "News, works, releases and archive updates--occasionally.",
-    placeholder: "Enter your email",
-    buttonLabel: "Subscribe",
-  };
+  // Main board: works with pictures first, then the newest read, then sections to make it up to three.
+  const slides = [...workItems.filter((item) => item.image).slice(0, 4), ...reads.slice(0, 1)];
+  slides.push(...SECTION_SLIDES.slice(0, Math.max(0, 3 - slides.length)));
+
+  const onNow = [workItems[0], reads[0], artistItems[0], shop, vaultItems[0]].filter(Boolean).slice(0, 4);
+  if (onNow.length < 3) onNow.push(...SECTION_SLIDES.slice(0, 3 - onNow.length));
+
+  // Further along the street: artists, reads and Vault pieces, then a few sections that are always there.
+  const streetMore = [
+    ...artistItems,
+    ...reads.slice(0, 3),
+    ...vaultItems.slice(0, 2),
+    SECTION_SLIDES[1],
+    ...(shop && !vaultItems.length ? [SECTION_SLIDES[0]] : []),
+    { key: "section:journal", kind: "Journal", icon: "journal", title: "Notes and updates from the haus", to: "/journal", go: "Read" },
+    { key: "section:newsletter", kind: "Newsletter", icon: "newsletter", title: "Join the haus", meta: "News, works and releases, occasionally", to: "/newsletter", go: "Join" },
+  ];
+
+  // The doors: every section, pictured by its newest item where there is one.
+  const firstImage = (items) => items.find((item) => item.image)?.image || "";
+  const doors = [
+    { to: "/works", label: "Works", icon: "works", image: firstImage(workItems), count: workItems.length },
+    { to: "/artists", label: "Artists", icon: "artists", image: firstImage(artistItems), count: artistItems.length },
+    { to: "/texts", label: "Texts", icon: "texts", image: firstImage(textItems), count: textItems.length },
+    { to: "/journal", label: "Journal", icon: "journal", image: firstImage(entryItems), count: entryItems.length },
+    { to: "/razz", label: "RazzMag", icon: "razz", image: "" },
+    { to: "/vault", label: "Vault", icon: "vault", image: firstImage(vaultItems) },
+    { to: "/shop", label: "Shop", icon: "shop", image: shop?.image || "" },
+    { to: "/commissions", label: "Bookings", icon: "commissions", image: "" },
+  ];
 
   return (
-    <main className="homepage page-content portal">
-      <div className="portal-grid">
-        {/* ---- Left column ---- */}
-        <aside className="portal-col portal-col--left" aria-label="Featured">
-          {featuredArtist?.slug && (
-            <Panel title="Featured artist" className="portal-artist">
-              <ArtistCard artist={featuredArtist} />
-            </Panel>
-          )}
+    <main className="homepage page-content hub-home">
+      <Scene slides={slides} onNow={onNow} listen={listen} shop={shop} more={streetMore} />
 
-          <Panel title="Quote" className="portal-quote">
-            <QuoteCard quote={quote} />
-          </Panel>
+      {works.status === "error" && (
+        <ContentState status={isForbiddenError(works.error) ? "closed" : "error"} />
+      )}
 
-          <Panel title="Stay connected" className="portal-newsletter">
-            <NewsletterCard newsletter={newsletter} />
-          </Panel>
+      <section className="hub-home__section" aria-labelledby="hub-explore">
+        <HubHeading icon="home">
+          <span id="hub-explore">Explore the haus</span>
+        </HubHeading>
+        <ul className="hub-doors">
+          {doors.map((door) => (
+            <li key={door.to}>
+              <Link to={door.to} className="hub-door">
+                <span className="hub-door__frame">
+                  <HubMedia image={door.image} icon={door.icon} />
+                </span>
+                <span className="hub-door__label">
+                  {door.label}
+                  {door.count > 0 && <span className="hub-door__count">{door.count}</span>}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-          <Panel title="Bookings + commissions">
-            <p>Work with the house.</p>
-            <MoreLink to="/commissions">Book a commission</MoreLink>
-          </Panel>
-        </aside>
+      <Dice pool={[...workItems, ...reads, ...artistItems, ...(shop ? [shop] : []), ...vaultItems]} />
 
-        {/* ---- Centre column ---- */}
-        <div className="portal-col portal-col--main">
-          <section className="portal-panel portal-hero" aria-label="Featured work">
-            <HeroCard hero={hero} />
-            {heroWorks.length > 1 && (
-              <div className="portal-hero__pager">
-                <span className="portal-hero__pager-label">Next work »</span>
-                {heroWorks.map((work, index) => (
-                  <button
-                    key={work.slug}
-                    type="button"
-                    className="portal-hero__page"
-                    aria-pressed={index === heroIndex % heroWorks.length}
-                    aria-label={`Show ${work.title}`}
-                    onClick={() => setHeroIndex(index)}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {worksStatus === "error" && (
-            <ContentState status={isForbiddenError(worksError) ? "closed" : "error"} />
-          )}
-
-          <Panel title="Today on UpsetXociety" className="portal-today">
-            {featuredRecord && (
-              <TodayRow
-                label="Works"
-                more={{ to: "/works", label: "More works" }}
-                item={{
-                  to: recordPath("/works", featuredRecord.slug),
-                  title: featuredRecord.title,
-                  meta: [featuredRecord.type, featuredRecord.year].filter(Boolean).join(" · "),
-                  excerpt: featuredRecord.excerpt,
-                  media: featuredRecord.image ? (
-                    <DitherCanvas id="featured-canvas" src={featuredRecord.image} alt={featuredRecord.imageAlt} />
-                  ) : null,
-                }}
-              />
-            )}
-
-            {musicWork && (
-              <TodayRow
-                label="Music"
-                more={{ to: "/works", label: "More music" }}
-                item={{
-                  to: recordPath("/works", musicWork.slug),
-                  title: musicWork.title,
-                  meta: [musicWork.artist?.name, musicWork.year].filter(Boolean).join(" · "),
-                  excerpt: musicWork.excerpt,
-                  go: "Listen",
-                  media: musicWork.image ? (
-                    <GlowCanvas className="portal-today__canvas" src={musicWork.image} alt={musicWork.imageAlt} />
-                  ) : null,
-                }}
-              />
-            )}
-
-            {latestText && (
-              <TodayRow
-                label="Texts"
-                more={{ to: "/texts", label: "More texts" }}
-                item={{
-                  to: recordPath("/texts", latestText.slug),
-                  title: latestText.title,
-                  meta: [latestText.category, latestText.author?.name].filter(Boolean).join(" · "),
-                  excerpt: latestText.excerpt,
-                  go: "Read",
-                }}
-              />
-            )}
-
-            {latestEntry && (
-              <TodayRow
-                label="Journal"
-                more={{ to: "/journal", label: "More journal" }}
-                item={{
-                  to: recordPath("/journal", latestEntry.slug),
-                  title: latestEntry.title,
-                  meta: [latestEntry.category, latestEntry.date].filter(Boolean).join(" · "),
-                  excerpt: latestEntry.excerpt,
-                  go: "Read",
-                }}
-              />
-            )}
-
-            {!featuredRecord && !latestText && !latestEntry && <ContentState status="empty" />}
-          </Panel>
+      <section className="hub-home__columns" aria-label="Newest and join">
+        <div className="hub-column">
+          <h2 className="hub-column__title">
+            Newest works <Link to="/works">All ›</Link>
+          </h2>
+          <RankedList items={workItems.slice(0, 8)} empty="New works arriving soon." />
         </div>
+        <div className="hub-column">
+          <h2 className="hub-column__title">
+            Newest reads <Link to="/texts">All ›</Link>
+          </h2>
+          <RankedList items={reads.slice(0, 8)} empty="Texts and journal entries arriving soon." />
+        </div>
+        <div className="hub-column">
+          <h2 className="hub-column__title">Join the haus</h2>
+          <QuickSignup />
+          <p className="hub-column__links">
+            <Link to="/commissions">Bookings + commissions ›</Link>
+            <Link to="/contact">Say hello ›</Link>
+          </p>
+        </div>
+      </section>
 
-        {/* ---- Right column ---- */}
-        <aside className="portal-col portal-col--right" aria-label="Shop and more works">
-          {shopItem && <ShopPanel item={shopItem} />}
+      <blockquote className="hub-quote">
+        <p>&ldquo;{quote.text}&rdquo;</p>
+        <footer>{quote.attribution}</footer>
+      </blockquote>
 
-          {relatedWorks.length > 0 && (
-            <Panel title="More works" className="portal-more-works">
-              <div className="related-works-grid">
-                {relatedWorks.map((work) => (
-                  <WorkCard key={work.slug} work={work} />
-                ))}
-              </div>
-            </Panel>
-          )}
-
-          <Panel title="The Vault">
-            <p>Original works, limited editions and archive objects.</p>
-            <MoreLink to="/vault">Open the Vault</MoreLink>
-          </Panel>
-        </aside>
-      </div>
+      <Link to="/works" className="hub-bigpill">
+        Enter the archive <HubIcon name="play" />
+      </Link>
     </main>
   );
 }

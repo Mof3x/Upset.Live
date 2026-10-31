@@ -1,87 +1,137 @@
+/* Footer: a navigation band, a row of small links, the small print and the UX stamp. */
 .site-footer {
-  width: 100%;
-  margin-top: clamp(4rem, 10vw, 9rem);
-  padding: 2rem clamp(1rem, 3vw, 3rem) 1.5rem;
-  border-top: 1px solid rgba(223, 255, 235, 0.35);
-}
-
-.site-footer__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2rem;
-  max-width: 76rem;
-  margin: 0 auto;
-}
-
-.site-footer section {
-  min-width: 0;
-}
-
-.site-footer__label {
-  margin: 0 0 0.75rem;
-  color: rgba(223, 255, 235, 0.65);
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.site-footer ul {
-  display: grid;
-  gap: 0.45rem;
-  padding: 0;
-  margin: 0;
-  list-style: none;
+  justify-items: center;
+  gap: 1rem;
+  width: min(100% - 1rem, 1200px);
+  margin: clamp(4rem, 10vw, 7rem) auto 0;
+  padding: 0 0 2.5rem;
 }
 
 .site-footer a {
-  color: inherit;
+  color: var(--hub-paper);
   text-decoration: none;
 }
 
-.site-footer a:hover,
 .site-footer a:focus-visible {
+  outline: 2px solid var(--hub-mint);
+  outline-offset: 3px;
+}
+
+/* ---- Navigation band ---- */
+.site-footer__band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.55rem 0.75rem 0.55rem 1rem;
+  border: 2px solid var(--hub-line);
+  background: var(--hub-glass);
+  box-shadow: 0 0 10px var(--hub-glow-soft);
+}
+
+.site-footer__band ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer__band li a {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.site-footer__band li a::before,
+.site-footer__links a::before {
+  content: "▸ ";
+  font-size: 0.8em;
+  opacity: 0.7;
+}
+
+.site-footer__band li a:hover {
+  text-shadow: 0 0 10px var(--hub-glow);
+}
+
+.site-footer__join {
+  flex: none;
+  padding: 0.25rem 0.9rem;
+  background: var(--hub-paper);
+  color: var(--hub-ink) !important;
+  font-weight: 700;
+  font-style: italic;
+}
+
+/* ---- Small links ---- */
+.site-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem 1.1rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.site-footer__links a:hover {
   text-decoration: underline;
   text-underline-offset: 0.2em;
 }
 
-.site-footer a:focus-visible {
-  outline: 2px solid #dfffeb;
-  outline-offset: 3px;
-}
-
-.site-footer__closing {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  max-width: 76rem;
-  margin: clamp(3rem, 8vw, 6rem) auto 0;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(223, 255, 235, 0.18);
-}
-
-.site-footer__logo {
-  font-size: clamp(1.3rem, 3vw, 2rem);
-  letter-spacing: 0.04em;
-}
-
-.site-footer__closing p {
+.site-footer__small {
+  max-width: 44rem;
   margin: 0;
-  color: rgba(223, 255, 235, 0.7);
-  text-align: right;
+  color: rgba(223, 255, 235, 0.6);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* ---- Stamp: the UX logo, one filled and one outlined letter box ---- */
+.site-footer__stamp {
+  display: flex;
+  margin-top: 0.5rem;
+}
+
+.site-footer__stamp b {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 2px solid var(--hub-paper);
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.site-footer__stamp b:first-child {
+  background: var(--hub-paper);
+  color: var(--hub-ink);
+}
+
+.site-footer__stamp b:last-child {
+  margin-left: -2px;
+}
+
+.site-footer__stamp:hover b {
+  box-shadow: 0 0 10px var(--hub-glow);
 }
 
 @media (max-width: 680px) {
-  .site-footer__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .site-footer__closing {
-    align-items: flex-start;
+  .site-footer__band {
     flex-direction: column;
+    align-items: stretch;
+    text-align: center;
   }
 
-  .site-footer__closing p {
-    text-align: left;
+  .site-footer__band ul {
+    justify-content: center;
   }
 }

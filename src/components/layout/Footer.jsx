@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { getSiteSettings } from "../../lib/queries";
 import { normalizeSiteSettings } from "../../lib/normalise";
+import { SECTIONS } from "../../lib/sections";
 import useDirectusResource from "../../lib/useDirectusResource";
 import "./Footer.css";
 
@@ -11,7 +12,7 @@ const fallbackSocials = {
   youtube: "https://www.youtube.com/@upsetxociety",
   email: "hello@upset.live",
 };
-const fallbackStatement = "An independent house for image, sound and thought.";
+const fallbackStatement = "An independent haus for image, sound and thought.";
 
 function ExternalLink({ href, children }) {
   return (
@@ -35,49 +36,53 @@ export default function Footer() {
     { label: "YouTube", href: socials.youtube },
   ];
 
+  const sectionLinks = SECTIONS.filter((section) => section.key !== "home");
+  const supportLinks = [
+    { label: "Newsletter", to: "/newsletter" },
+    { label: "Bookings and commissions", to: "/commissions" },
+    { label: "Print editions", to: "/shop/prints" },
+    { label: "Contact", to: "/contact" },
+  ];
+
+  // Laid out like the bottom of an old channel site: a navigation band, a row of small links,
+  // the small print and the UX stamp.
   return (
     <footer className="site-footer">
-      <div className="site-footer__grid">
-        <section>
-          <p className="site-footer__label">Navigate</p>
-          <ul>
-            <li><Link to="/works">Works</Link></li>
-            <li><Link to="/texts">Texts</Link></li>
-            <li><Link to="/journal">Journal</Link></li>
-            <li><Link to="/razz">Razz Magazine</Link></li>
-            <li><Link to="/about">About</Link></li>
-            <li><Link to="/contact">Contact</Link></li>
-          </ul>
-        </section>
-
-        <section>
-          <p className="site-footer__label">Follow</p>
-          <ul>
-            {socialLinks.map((link) => (
-              <li key={link.label}>
-                <ExternalLink href={link.href}>{link.label}</ExternalLink>
-              </li>
-            ))}
-            <li><a href={`mailto:${email}`}>Email</a></li>
-          </ul>
-        </section>
-
-        <section>
-          <p className="site-footer__label">Support</p>
-          <ul>
-            <li><Link to="/newsletter">Newsletter</Link></li>
-            <li><Link to="/commissions">Bookings and commissions</Link></li>
-            <li><Link to="/shop/prints">Print editions</Link></li>
-          </ul>
-        </section>
-      </div>
-
-      <div className="site-footer__closing">
-        <Link className="site-footer__logo" to="/">
-          UpsetXociety
+      <nav className="site-footer__band" aria-label="Footer">
+        <ul>
+          {sectionLinks.map((section) => (
+            <li key={section.key}>
+              <Link to={section.to}>{section.label}</Link>
+            </li>
+          ))}
+        </ul>
+        <Link to="/newsletter" className="site-footer__join">
+          Join us
         </Link>
-        <p>{settings?.footerStatement || fallbackStatement}</p>
-      </div>
+      </nav>
+
+      <ul className="site-footer__links">
+        {supportLinks.map((link) => (
+          <li key={link.to}>
+            <Link to={link.to}>{link.label}</Link>
+          </li>
+        ))}
+        {socialLinks.map((link) => (
+          <li key={link.label}>
+            <ExternalLink href={link.href}>{link.label}</ExternalLink>
+          </li>
+        ))}
+        <li><a href={`mailto:${email}`}>Email</a></li>
+      </ul>
+
+      <p className="site-footer__small">
+        {settings?.footerStatement || fallbackStatement} © {new Date().getFullYear()} UpsetXociety.
+      </p>
+
+      <Link className="site-footer__stamp" to="/" aria-label="UpsetXociety, home">
+        <b aria-hidden="true">U</b>
+        <b aria-hidden="true">X</b>
+      </Link>
     </footer>
   );
 }

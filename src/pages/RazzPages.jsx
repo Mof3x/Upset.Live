@@ -40,8 +40,8 @@ export function RazzPage() {
     <main className="core-page page-content">
       <PageIntro
         eyebrow="Razz Magazine"
-        title="Razz"
-        description="Issues, features, interviews and visual essays from the house and its contributors."
+        title="RazzMag"
+        description="Issues, features, interviews and visual essays from the haus and its contributors."
       />
 
       {current ? (
@@ -171,7 +171,7 @@ export function RazzIssuePage() {
 
       <RelatedRail
         groups={[
-          { label: "Razz", items: [{ to: "/razz", label: "All issues" }] },
+          { label: "RazzMag", items: [{ to: "/razz", label: "All issues" }] },
         ]}
       />
     </main>

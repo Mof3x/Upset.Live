@@ -1,26 +1,35 @@
+import { useState } from "react";
 import Noise from "../atmosphere/Noise";
 import CRTEffect from "vault66-crt-effect";
 import "vault66-crt-effect/dist/vault66-crt-effect.css";
-// Portal layout trial: folder tabs replace the old Navbar (kept in Navbar.jsx; swap back here to revert).
-import PortalHeader from "./PortalHeader";
+// Hub layout: HubHeader replaces the old Navbar (kept in Navbar.jsx; swap back here to revert).
+import HubHeader from "./HubHeader";
 import Footer from "./Footer";
 import { AudioProvider } from "../audio/AudioProvider";
 import { BasketProvider } from "../basket/BasketProvider";
 import NowPlaying from "../audio/NowPlaying";
+import { readNoiseLevel, saveNoiseLevel } from "../../lib/noiseLevel";
 import "../../index.css";
 
 export default function SiteShell({ children }) {
+  const [noise, setNoise] = useState(readNoiseLevel);
+  const changeNoise = (level) => {
+    setNoise(level);
+    saveNoiseLevel(level);
+  };
+
   return (
     <AudioProvider>
     <BasketProvider>
     <div className="site-shell">
-      <div className="noise-layer">
+      <div className="noise-layer" data-noise={noise}>
       <Noise
         patternSize={900}
         patternScaleX={2}
         patternScaleY={1}
         patternRefreshInterval={2}
         patternAlpha={400}
+        pixelated={noise === "high"}
         />
       </div>
       <div className="crt-wrap">
@@ -39,7 +48,7 @@ export default function SiteShell({ children }) {
           enableFlicker={false}
           enableFilter={false}
         >
-          <PortalHeader />
+          <HubHeader noise={noise} onNoiseChange={changeNoise} />
           <main className="site-content">{children}</main>
           <Footer />
         </CRTEffect>
