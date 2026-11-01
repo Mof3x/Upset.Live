@@ -18,4 +18,3 @@ Other documentation:
 - **[`Upset.live/Backend/db schema.md`](../Upset.live/Backend/db%20schema.md)** is the most reliable list of tables and
   columns. It predates the `is_published` columns (see
   [`publication fields.sql`](../Upset.live/Backend/publication%20fields.sql)) and `artists.discipline`.
-- **[`CLAUDE.md`](../CLAUDE.md)** is a condensed version of these docs for AI coding assistants. Keep the two consistent.

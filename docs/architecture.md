@@ -14,8 +14,10 @@ browser reads content straight from the Directus API (see [Data layer](data-laye
    - `HubHeader` (logo, "Pick an artist" strip, section tabs, "On now" ticker and the Noise button), the routed page
      inside `<main class="site-content">`, and `Footer`. `Navbar.jsx` is the previous header, kept but unused.
 
-The Noise button steps the background noise through High, Medium and Low (`lib/noiseLevel.js`); the choice is kept
-in the visitor's localStorage (`upset-noise-v1`).
+The Noise button steps the background noise through High, Medium, Low and Off (`lib/noiseLevel.js`; Off removes the
+noise canvas); the choice is kept in the visitor's localStorage (`upset-noise-v1`). On phones (≤ 820px) the tabs, the
+utility buttons and Noise move into a Menu drop-down. The artist strip shows each artist's portrait
+(`portrait_file_id`, which the profile sync flow copies from their Directus avatar), or their name when there is none.
 
 The shell stays mounted while you move between pages. Always navigate with React Router's `<Link>` (or `TextLink`):
 a plain `<a href>` to an internal page reloads the app and restarts every canvas effect.
@@ -100,7 +102,7 @@ visitors see on sections the public can't read yet.
 | `cards/` | `WorkCard`, `ArtistCard` (takes `basePath`, so it also renders contributors), `TextCard`, `EntryCard` (journal and other editorial lists), `VaultItemCard` |
 | `forms/` | `EnquiryForm` (config-driven fields, validation, honeypot, sending/sent/error states) and `NewsletterForm` |
 | `basket/` | `BasketProvider` (the basket for the whole site, mounted in the shell, saved in localStorage) and `AddToBasket` (price, stock note, quantity and "Add to basket" on item pages) |
-| `hub/` | The homepage hub layout: `Scene` (the scrolling street of billboards; `SCENE_BACKDROP` takes a render), `Dice` (random pick), `HubIcon` (line icons standing in for renders), `HubParts` (`HubHeading`, `GoLink`, `HubMedia`, `PlayButton`, `RankedList`) |
+| `hub/` | The homepage hub layout: `Scene` (the scrolling street, one billboard per work; `SCENE_BACKDROP` takes a render), `Dice` (random pick), `HubIcon` (line icons standing in for renders), `HubParts` (`HubHeading`, `GoLink`, `HubMedia`, `PlayButton`, `RankedList`) |
 | `layout/` | `SiteShell`, `HubHeader`, `Navbar` (unused), `Footer`, `CardGrid` (responsive grid; the `min` prop sets the minimum card width), `PageIntro` and `DetailHeader`, `PageState` |
 | `rails/` | `RelatedRail`, a titled list of links to related records |
 | `ui/` | `Prose` (renders paragraph arrays, with a fallback), `MediaFrame` (fixed aspect ratio image frame), `MetaLine`, `TagList`, `TextLink` (internal `Link` or external `<a>` with an optional arrow), `SectionHeading`, `CategoryNav` (filter buttons), `ContentState` |

@@ -72,12 +72,13 @@ function ArtistStrip() {
         <ul className="hub-strip__window" ref={windowRef} onScroll={(event) => setEdges(edgesOf(event.currentTarget))}>
           {list.map((artist) => (
             <li key={artist.slug}>
-              <Link to={recordPath("/artists", artist.slug)} className="hub-strip__face" title={artist.name}>
-                {artist.image ? (
-                  <img src={artist.image} alt="" loading="lazy" />
-                ) : (
-                  <span className="hub-strip__initial" aria-hidden="true">{artist.name.charAt(0)}</span>
-                )}
+              {/* The portrait is the artist's profile picture (their Directus avatar, copied onto the artist record). */}
+              <Link
+                to={recordPath("/artists", artist.slug)}
+                className={`hub-strip__face${artist.image ? "" : " hub-strip__face--text"}`}
+                title={artist.name}
+              >
+                {artist.image && <img src={artist.image} alt="" loading="lazy" />}
                 <span className="hub-strip__name">{artist.name}</span>
               </Link>
             </li>
@@ -101,11 +102,14 @@ function ArtistStrip() {
   );
 }
 
-// Steps the background noise High → Medium → Low → High. The bars show the current strength.
+// Steps the background noise High → Medium → Low → Off → High. The bars show the current strength
+// (three for High, none for Off).
+const NOISE_BARS = 3;
+
 function NoiseButton({ level, onChange }) {
   const index = Math.max(0, NOISE_LEVELS.findIndex((item) => item.key === level));
   const next = NOISE_LEVELS[(index + 1) % NOISE_LEVELS.length];
-  const strength = NOISE_LEVELS.length - index;
+  const strength = NOISE_BARS - index;
 
   return (
     <button
@@ -117,8 +121,8 @@ function NoiseButton({ level, onChange }) {
     >
       Noise
       <span className="hub-noise__bars" aria-hidden="true">
-        {NOISE_LEVELS.map((item, bar) => (
-          <i key={item.key} className={bar < strength ? "is-on" : ""} />
+        {Array.from({ length: NOISE_BARS }, (_, bar) => (
+          <i key={bar} className={bar < strength ? "is-on" : ""} />
         ))}
       </span>
     </button>
@@ -130,6 +134,15 @@ export default function HubHeader({ noise, onNoiseChange }) {
   const { count } = useBasket();
   const tickerItems = useTickerItems();
   const showBasket = checkoutEnabled && count > 0;
+  // Phones: the tabs, buttons and Noise move into one drop-down menu.
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const closeOnEscape = (event) => event.key === "Escape" && setMenuOpen(false);
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [menuOpen]);
 
   return (
     <header className="hub-header">
@@ -144,6 +157,23 @@ export default function HubHeader({ noise, onNoiseChange }) {
             <span>Art Haus</span>
           </span>
         </Link>
+
+        <div className="hub-phonebar">
+          {showBasket && (
+            <Link to="/basket" className="hub-phonebar__basket nav-basket">
+              Basket ({count})
+            </Link>
+          )}
+          <button
+            type="button"
+            className="hub-phonebar__menu"
+            onClick={() => setMenuOpen((value) => !value)}
+            aria-expanded={menuOpen}
+            aria-controls="hub-menu"
+          >
+            {menuOpen ? "Close" : "Menu"}
+          </button>
+        </div>
 
         <ArtistStrip />
 
@@ -209,6 +239,37 @@ export default function HubHeader({ noise, onNoiseChange }) {
         )}
         {onNoiseChange && <NoiseButton level={noise} onChange={onNoiseChange} />}
       </div>
+
+      {menuOpen && (
+        // Following any link closes the menu.
+        <div
+          id="hub-menu"
+          className="hub-menu"
+          onClick={(event) => {
+            if (event.target.closest("a")) setMenuOpen(false);
+          }}
+        >
+          <ul className="hub-menu__sections">
+            {SECTIONS.map((section) => {
+              const active = section.match(pathname);
+              return (
+                <li key={section.key}>
+                  <Link to={section.to} className={active ? "is-active" : undefined} aria-current={active ? "page" : undefined}>
+                    <HubIcon name={section.icon} />
+                    {section.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="hub-menu__links">
+            <Link to="/newsletter">Join us</Link>
+            <Link to="/contact">Contact</Link>
+            <Link to="/commissions">Book us</Link>
+          </p>
+          {onNoiseChange && <NoiseButton level={noise} onChange={onNoiseChange} />}
+        </div>
+      )}
     </header>
   );
 }

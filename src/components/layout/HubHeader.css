@@ -135,7 +135,7 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 4.1rem;
+  width: 8.2rem;
   height: 4.1rem;
   overflow: hidden;
   border: 2px solid var(--hub-paper);
@@ -154,24 +154,37 @@ a.hub-strip__face:focus-visible {
   object-fit: cover;
 }
 
-.hub-strip__initial {
-  font-size: 2rem;
-  font-weight: 700;
-}
-
 .hub-strip__face--empty {
   border-style: dashed;
   border-color: var(--hub-glow-soft);
   color: var(--hub-glow-soft);
 }
 
+/* The name sits over the bottom of the portrait (shadowed, not boxed), or fills the button when there is none. */
 .hub-strip__name {
   position: absolute;
-  width: 1px;
-  height: 1px;
+  right: 0.35rem;
+  bottom: 0.2rem;
+  left: 0.35rem;
+  z-index: 101;
   overflow: hidden;
-  clip-path: inset(50%);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 4px #000, 0 0 8px #000;
   white-space: nowrap;
+}
+
+.hub-strip__face--text .hub-strip__name {
+  position: static;
+  display: -webkit-box;
+  padding: 0 0.45rem;
+  font-size: 0.95rem;
+  text-align: center;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .hub-strip__label {
@@ -376,6 +389,85 @@ a.hub-strip__face:focus-visible {
   }
 }
 
+/* ---- Phone menu: the Menu button and its drop-down (phones only) ---- */
+.hub-phonebar,
+.hub-menu {
+  display: none;
+}
+
+.hub-phonebar {
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hub-phonebar__menu,
+.hub-phonebar__basket {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--hub-line);
+  background: transparent;
+  color: var(--hub-paper);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hub-phonebar__menu[aria-expanded="true"] {
+  background: var(--hub-paper);
+  color: var(--hub-ink);
+}
+
+.hub-menu {
+  gap: 0.9rem;
+  margin-top: 0.6rem;
+  padding: 0.75rem 0.25rem 1rem;
+  border-top: 1px solid var(--hub-line);
+  border-bottom: 1px solid var(--hub-line);
+}
+
+.hub-menu__sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.15rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hub-menu__sections a {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.4rem;
+  border: 1px solid transparent;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.hub-menu__sections a.is-active {
+  border-color: var(--hub-line);
+}
+
+.hub-menu__sections .hub-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  opacity: 0.75;
+}
+
+.hub-menu__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  margin: 0;
+  padding: 0 0.4rem;
+  font-weight: 700;
+}
+
+.hub-menu .hub-noise {
+  justify-self: start;
+  margin-left: 0.4rem;
+}
+
 /* ---- Tablets: the tabs drop their icons ---- */
 @media (max-width: 1060px) {
   .hub-tab .hub-icon {
@@ -387,44 +479,61 @@ a.hub-strip__face:focus-visible {
   }
 }
 
-/* ---- Phones and small tablets: everything stacks, the tabs wrap and centre ---- */
+/* ---- Phones and small tablets: logo and Menu on one row, the artist strip under them; the tabs,
+   buttons and Noise move into the drop-down ---- */
 @media (max-width: 820px) {
   .hub-header__top {
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: center;
-    gap: 0.9rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .hub-phonebar {
+    display: flex;
+  }
+
+  .hub-menu {
+    display: grid;
   }
 
   .hub-strip {
-    width: 100%;
+    grid-column: 1 / -1;
   }
 
-  .hub-utility {
-    grid-row: 2;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    width: 100%;
+  /* Swipe the strip instead of using arrows. */
+  .hub-strip__arrow {
+    display: none;
   }
 
-  .hub-tabs ul {
-    justify-content: center;
+  .hub-strip__label {
+    margin-inline: 0;
   }
 
-  .hub-tab {
-    padding: 0.35rem 0.55rem;
+  .hub-utility,
+  .hub-tabs,
+  .hub-bulletin .hub-noise {
+    display: none;
   }
 
-  .hub-tab span {
-    font-size: 1rem;
+  .hub-bulletin {
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
   }
 }
 
 @media (max-width: 420px) {
-  .hub-tab .hub-icon {
-    display: none;
+  .hub-logo__words strong {
+    font-size: 1.25rem;
+  }
+
+  .hub-logo__stamp span {
+    width: 2.4rem;
+    height: 2.4rem;
+    font-size: 1.6rem;
   }
 
   .hub-strip__face {
-    width: 3.5rem;
+    width: 7rem;
     height: 3.5rem;
   }
 }

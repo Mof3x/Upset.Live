@@ -28,12 +28,21 @@
   margin-bottom: 0.9rem;
 }
 
-.scene__hint {
-  margin-right: 0.4rem;
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
+.scene__all {
+  margin-right: auto;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  opacity: 0.6;
+}
+
+.scene__all:hover {
+  text-shadow: 0 0 10px var(--hub-glow);
+}
+
+.scene a {
+  color: var(--hub-paper);
+  text-decoration: none;
 }
 
 .scene__controls button {
@@ -141,13 +150,6 @@
   padding-top: 0.8rem;
 }
 
-.board__kind {
-  margin: 0;
-  font-size: 0.75rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  opacity: 0.65;
-}
 
 .board__title {
   margin: 0;
@@ -179,68 +181,6 @@
   margin-top: 0.35rem;
 }
 
-.board__pager {
-  display: flex;
-  gap: 0.35rem;
-}
-
-.board__pager button {
-  width: 1.9rem;
-  height: 1.9rem;
-  border: 1px solid var(--hub-line);
-  background: transparent;
-  color: var(--hub-paper);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.board__pager button:hover {
-  box-shadow: 0 0 10px var(--hub-glow);
-}
-
-.board__pager button[aria-pressed="true"] {
-  background: var(--hub-paper);
-  color: var(--hub-ink);
-}
-
-.board__pager button:focus-visible {
-  outline: 2px solid var(--hub-mint);
-  outline-offset: 2px;
-}
-
-/* The "On now" board is a list instead of a picture. */
-.board__list {
-  display: grid;
-  margin: 0;
-  padding: 0.25rem 0 0;
-  border-top: 1px solid var(--hub-line);
-  list-style: none;
-}
-
-.board__list li {
-  display: grid;
-  gap: 0.1rem;
-  padding: 0.6rem 0;
-  border-bottom: 1px dotted var(--hub-glow-soft);
-}
-
-.board__list span {
-  font-size: 0.7rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  opacity: 0.6;
-}
-
-.board__list a {
-  font-size: 1.05rem;
-  line-height: 1.2;
-}
-
-.board__list a:hover {
-  text-shadow: 0 0 10px var(--hub-glow);
-}
-
 /* Two thin posts from the board down to the ground line; taller for boards that sit higher. */
 .board__posts {
   flex: 1;
@@ -250,40 +190,41 @@
   border-left: 1px solid var(--hub-glow-soft);
 }
 
-/* ---- Ground: the horizon line and a faint floor grid that fades out ---- */
+/* ---- Ground: the horizon line and a faint floor grid that runs towards the viewer, then fades ---- */
 .scene__ground {
   position: relative;
   height: 4.5rem;
   overflow: hidden;
   border-top: 1px solid var(--hub-line);
-  box-shadow: 0 -1px 14px var(--hub-glow-soft);
+  /* Negative spread keeps the glow on the horizon line instead of around the whole floor. */
+  box-shadow: 0 -4px 10px -6px var(--hub-glow);
 }
 
 .scene__ground::before {
   content: "";
   position: absolute;
-  inset: 0 -40% -60%;
+  inset: 0 -50% -80%;
   background-image:
-    linear-gradient(var(--hub-glow-soft) 1px, transparent 1px),
-    linear-gradient(90deg, var(--hub-glow-soft) 1px, transparent 1px);
+    linear-gradient(rgba(223, 255, 235, 0.36) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(223, 255, 235, 0.36) 1px, transparent 1px);
   background-size: 3.5rem 3.5rem;
   transform: perspective(14rem) rotateX(58deg);
   transform-origin: top;
-  opacity: 0.6;
+  /* Bright at the horizon, gone towards the viewer. */
+  mask-image: linear-gradient(to bottom, #000 0, transparent 70%);
 }
 
-/* Fades the floor out at the sides and towards the viewer, so it never reads as a box. */
-.scene__ground {
-  mask-image: radial-gradient(ellipse 60% 100% at 50% 0, #000 30%, transparent 100%);
-}
-
-/* ---- Phones: the street keeps scrolling; boards sit closer to the ground ---- */
+/* ---- Phones: swipe the street (no arrows); boards sit closer to the ground ---- */
 @media (max-width: 560px) {
   .board {
     padding-top: calc(var(--drop, 0) / 2);
   }
 
-  .scene__hint {
+  .scene__controls button {
     display: none;
+  }
+
+  .scene__ground {
+    height: 4.5rem;
   }
 }

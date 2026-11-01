@@ -129,20 +129,20 @@
   border-color: #dfffeb;
 }
 
-/* Bar that follows the visitor while a recording plays. It sits outside the CRT wrapper. */
+/* Slim pill that follows the visitor while a recording plays. It sits outside the CRT wrapper. */
 .now-playing {
   position: fixed;
-  right: 16px;
-  bottom: 16px;
+  right: 10px;
+  bottom: 10px;
   z-index: 50;
-  width: min(24rem, calc(100vw - 32px));
+  width: min(19rem, calc(100vw - 20px));
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.6rem;
+  gap: 0.45rem;
+  padding: 0.25rem 0.3rem;
   border: 1px solid rgba(223, 255, 235, 0.45);
-  border-radius: 16px;
+  border-radius: 999px;
   background: rgba(10, 10, 10, 0.92);
   color: #7affc9;
   font-family: "Verdana", sans-serif;
@@ -151,12 +151,12 @@
 }
 
 .now-playing__spacer {
-  height: 5rem;
+  height: 3rem;
 }
 
 .now-playing__button {
-  width: 2.4rem;
-  height: 2.4rem;
+  width: 1.75rem;
+  height: 1.75rem;
   display: grid;
   place-items: center;
   border: none;
@@ -170,6 +170,7 @@
   min-width: 0;
   margin: 0;
   display: grid;
+  line-height: 1.2;
 }
 
 .now-playing__text a {
@@ -189,6 +190,24 @@
 .now-playing__time {
   margin: 0;
   font-variant-numeric: tabular-nums;
+}
+
+.now-playing__button svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+/* Phones: one line, the title only. */
+@media (max-width: 560px) {
+  .now-playing {
+    width: min(15rem, calc(100vw - 20px));
+  }
+
+  /* The running time is hidden; loading and error messages still show. */
+  .now-playing__artist,
+  .now-playing__time [aria-hidden="true"] {
+    display: none;
+  }
 }
 
 .audio-hidden {

@@ -4,6 +4,7 @@ export const NOISE_LEVELS = [
   { key: "high", label: "High" },
   { key: "medium", label: "Medium" },
   { key: "low", label: "Low" },
+  { key: "off", label: "Off" },
 ];
 
 export const NOISE_STORAGE_KEY = "upset-noise-v1";

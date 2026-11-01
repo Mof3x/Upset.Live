@@ -66,5 +66,4 @@ A change isn't finished until the docs match it. Update:
 - [Directus](directus.md) for collections, public access, roles and newly found Directus bugs;
 - [Deployment](deployment.md) for hosting, variables and troubleshooting;
 - the [CMS guide](../Upset.live/CMS%20guide/CMS%20guide.md) for anything artists or editors see or do differently;
-- `CLAUDE.md`, the condensed version for AI assistants;
 - the vault's Progress report and Master TODO for status.

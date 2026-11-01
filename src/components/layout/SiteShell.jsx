@@ -22,16 +22,19 @@ export default function SiteShell({ children }) {
     <AudioProvider>
     <BasketProvider>
     <div className="site-shell">
-      <div className="noise-layer" data-noise={noise}>
-      <Noise
-        patternSize={900}
-        patternScaleX={2}
-        patternScaleY={1}
-        patternRefreshInterval={2}
-        patternAlpha={400}
-        pixelated={noise === "high"}
-        />
-      </div>
+      {/* "Off" removes the noise canvas completely, so it stops drawing too. */}
+      {noise !== "off" && (
+        <div className="noise-layer" data-noise={noise}>
+          <Noise
+            patternSize={900}
+            patternScaleX={2}
+            patternScaleY={1}
+            patternRefreshInterval={2}
+            patternAlpha={400}
+            pixelated={noise === "high"}
+          />
+        </div>
+      )}
       <div className="crt-wrap">
         <CRTEffect
           enabled

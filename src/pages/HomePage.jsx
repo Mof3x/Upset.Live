@@ -215,13 +215,6 @@ const asObject = (item, base) => ({
   go: "View",
 });
 
-// Section slides, used while there is little content, so the main board always has a few things to show.
-const SECTION_SLIDES = [
-  { key: "section:vault", kind: "The Vault", icon: "vault", title: "Originals, editions and archive objects", to: "/vault", go: "Enter" },
-  { key: "section:razz", kind: "RazzMag", icon: "razz", title: "Issues, features and visual essays", to: "/razz", go: "Read" },
-  { key: "section:commissions", kind: "Bookings", icon: "commissions", title: "Work with the haus", to: "/commissions", go: "Book" },
-];
-
 export default function HomePage() {
   const works = useDirectusResource(getPublishedWorks, [], normalizeWork);
   // Everything else is optional: a source that fails or is empty is simply left out.
@@ -249,26 +242,7 @@ export default function HomePage() {
   const vaultItems = openItems
     .filter((item) => !SHOP_CATEGORY_SLUGS.includes(item.categorySlug))
     .map((item) => asObject(item, "/vault"));
-  const listen = workItems.find((item) => item.audio) || null;
   const reads = [...textItems, ...entryItems];
-
-  // Main board: works with pictures first, then the newest read, then sections to make it up to three.
-  const slides = [...workItems.filter((item) => item.image).slice(0, 4), ...reads.slice(0, 1)];
-  slides.push(...SECTION_SLIDES.slice(0, Math.max(0, 3 - slides.length)));
-
-  const onNow = [workItems[0], reads[0], artistItems[0], shop, vaultItems[0]].filter(Boolean).slice(0, 4);
-  if (onNow.length < 3) onNow.push(...SECTION_SLIDES.slice(0, 3 - onNow.length));
-
-  // Further along the street: artists, reads and Vault pieces, then a few sections that are always there.
-  const streetMore = [
-    ...artistItems,
-    ...reads.slice(0, 3),
-    ...vaultItems.slice(0, 2),
-    SECTION_SLIDES[1],
-    ...(shop && !vaultItems.length ? [SECTION_SLIDES[0]] : []),
-    { key: "section:journal", kind: "Journal", icon: "journal", title: "Notes and updates from the haus", to: "/journal", go: "Read" },
-    { key: "section:newsletter", kind: "Newsletter", icon: "newsletter", title: "Join the haus", meta: "News, works and releases, occasionally", to: "/newsletter", go: "Join" },
-  ];
 
   // The doors: every section, pictured by its newest item where there is one.
   const firstImage = (items) => items.find((item) => item.image)?.image || "";
@@ -285,7 +259,7 @@ export default function HomePage() {
 
   return (
     <main className="homepage page-content hub-home">
-      <Scene slides={slides} onNow={onNow} listen={listen} shop={shop} more={streetMore} />
+      <Scene works={workItems} />
 
       {works.status === "error" && (
         <ContentState status={isForbiddenError(works.error) ? "closed" : "error"} />
