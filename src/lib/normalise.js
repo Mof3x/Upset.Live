@@ -1,4 +1,5 @@
 import { getMediaAlt, getMediaUrl } from "./media";
+import { HOUSE_SHOP_SLUG } from "./marketplace";
 
 function firstValue(...values) {
   return values.find((value) => value !== undefined && value !== null && value !== "");
@@ -299,6 +300,32 @@ function priceFrom(value) {
   return value !== null && value !== "" && Number.isFinite(price) && price > 0 ? price : null;
 }
 
+// The shop a product belongs to, from vault_items.shop_id expanded (see queries.js), or null
+// when no shop is set (a house product).
+function shopOf(record) {
+  const shop = isRecord(record.shop_id) ? record.shop_id : null;
+  return shop?.slug ? { slug: shop.slug, name: shop.name || shop.slug } : null;
+}
+
+// A shop (the Directus `shops` collection). The house shop is the collective's own; it is
+// recognised by its slug here, and by having no artist in the checkout Worker.
+export function normalizeShop(record) {
+  if (!isRecord(record) || !record.slug) return null;
+  const artist = isRecord(record.artist_id) && record.artist_id.slug ? { slug: record.artist_id.slug, name: record.artist_id.name || "" } : null;
+  const intro = bodyToParagraphs(record.intro);
+  return {
+    id: record.id,
+    slug: record.slug,
+    name: record.name || record.slug,
+    intro,
+    excerpt: excerptFrom(intro, 160),
+    banner: getMediaUrl(record.banner_file_id),
+    bannerAlt: getMediaAlt(record.banner_file_id, record.name || "Shop banner"),
+    artist,
+    isHouse: record.slug === HOUSE_SHOP_SLUG,
+  };
+}
+
 export function normalizeVaultItem(record = {}) {
   const category = categoryOf(record);
   const description = bodyToParagraphs(record.description);
@@ -311,6 +338,11 @@ export function normalizeVaultItem(record = {}) {
   const price = priceFrom(record.price);
   // An empty stock field counts as 0, so a priced item is never on sale by accident.
   const inventory = Math.max(0, Math.floor(Number(record.inventory) || 0));
+  const shop = shopOf(record);
+  // House products are paid to the collective. Artist shops get online payment in Marketplace
+  // stage 3 (Stripe Connect); until then their products are enquiry-only, and the checkout
+  // Worker can't see them either.
+  const fromHouse = !shop || shop.slug === HOUSE_SHOP_SLUG;
 
   return {
     id: record.id,
@@ -328,11 +360,16 @@ export function normalizeVaultItem(record = {}) {
     price,
     priceLabel: price ? priceFormat.format(price) : "",
     inventory,
+    shop,
+    fromHouse,
+    // Off means the item is only in the Marketplace, not the Vault (editors decide; empty counts as on).
+    showInVault: record.show_in_vault !== false,
     // The rule for selling, the same in the Marketplace and the Vault:
-    // - buyable: marked available, has a price and at least one in stock.
+    // - buyable: marked available, has a price, at least one in stock, and its shop can take
+    //   payments (for now only the house shop, see fromHouse).
     // - soldOut: has a price but no stock (including a unit held at checkout).
     // - no price: enquiry only, which is how a Vault piece stays off sale.
-    buyable: status === "available" && price !== null && inventory > 0,
+    buyable: status === "available" && price !== null && inventory > 0 && fromHouse,
     soldOut: status === "available" && price !== null && inventory === 0,
     edition: [
       record.edition_number ? `No. ${record.edition_number}` : "",

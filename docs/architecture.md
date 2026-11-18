@@ -49,6 +49,9 @@ Every route is registered in `src/App.jsx`.
 | `/marketplace` | `MarketplacePage` | `VaultPages.jsx` | Vault items in Marketplace categories |
 | `/marketplace/:slug` | `MarketplaceSlugPage` | `VaultPages.jsx` | A Marketplace category (e.g. `/marketplace/prints`) or a single item |
 | `/shop`, `/shop/:slug` | `LegacyShopRedirect` | `VaultPages.jsx` | Old Shop addresses; forward to the same page under `/marketplace` |
+| `/shops` | `ShopsPage` | `VaultPages.jsx` | Every open shop (the house shop first) |
+| `/shops/:slug` | `ShopPage` | `VaultPages.jsx` | One shop: banner, name, intro, its products |
+| `/artists/:slug/shop` | `ArtistShopPage` | `VaultPages.jsx` | The same shop page, found by the artist who runs it |
 | `/basket` | `BasketPage` | `BasketPage.jsx` | The visitor's basket and Checkout |
 | `/order/complete` | `OrderCompletePage` | `VaultPages.jsx` | Where Stripe returns a buyer after paying; empties the basket |
 | `/commissions` | `CommissionsPage` | `CommissionPages.jsx` | Commission disciplines |
@@ -63,6 +66,13 @@ Notes on specific routes:
   `publications`, `posters`, `apparel`, `music-digital-releases`, `guest-works`, in `lib/marketplace.js`), it renders that
   category; otherwise it looks up a Vault item. The Marketplace (called the Shop until November 2026) is the subset of open Vault items in those categories. It is
   not a separate collection.
+- **Shops** (Marketplace stage 2, November 2026). Every product belongs to a shop: an artist's own shop
+  (`vault_items.shop_id`) or, when that is empty, the collective's house shop (slug `upsetxociety`, `HOUSE_SHOP_SLUG`
+  in `lib/marketplace.js`). The Marketplace lists its categories plus every artist-shop product
+  (`isMarketplaceItem`); the Vault lists items with `show_in_vault` on. Products of draft or closed shops are hidden
+  by the query and by the Public rule. Until stage 3 (Stripe Connect), only house products can be bought: artist
+  products are enquiry-only (`fromHouse` in `normalizeVaultItem`), and the checkout Worker's Directus policy can't
+  see them. The plan is in `Upset.live/Marketplace plan.md`.
 - **Buying** works the same in the Marketplace and the Vault. An item shows "Add to basket" when its status is Available, it
   has a price and its stock (`inventory`) is at least 1, and the site was built with `VITE_CHECKOUT_ENDPOINT`. A priced
   item with no stock shows "Sold out"; an item without a price is enquiry-only. The basket is kept in the visitor's

@@ -27,6 +27,9 @@ import {
   MarketplaceSlugPage,
   LegacyShopRedirect,
   OrderCompletePage,
+  ShopsPage,
+  ShopPage,
+  ArtistShopPage,
 } from "./pages/VaultPages";
 import { CommissionsPage, CommissionDisciplinePage } from "./pages/CommissionPages";
 import { ContactPage, NewsletterPage } from "./pages/FormPages";
@@ -52,6 +55,8 @@ export default function App() {
           <Route path="/about/ethos" element={<EthosPage />} />
           <Route path="/artists" element={<ArtistsPage />} />
           <Route path="/artists/:slug" element={<ArtistPage />} />
+          {/* An artist's shop: the same page as /shops/<shop>. */}
+          <Route path="/artists/:slug/shop" element={<ArtistShopPage />} />
           <Route path="/works" element={<WorksPage />} />
           <Route path="/works/:slug" element={<WorkPage />} />
           <Route path="/texts" element={<TextsPage />} />
@@ -67,6 +72,8 @@ export default function App() {
           <Route path="/vault/:slug" element={<VaultItemPage />} />
           <Route path="/marketplace" element={<MarketplacePage />} />
           <Route path="/marketplace/:slug" element={<MarketplaceSlugPage />} />
+          <Route path="/shops" element={<ShopsPage />} />
+          <Route path="/shops/:slug" element={<ShopPage />} />
           {/* The Shop was renamed the Marketplace: old links forward to the same page. */}
           <Route path="/shop" element={<LegacyShopRedirect />} />
           <Route path="/shop/:slug" element={<LegacyShopRedirect />} />

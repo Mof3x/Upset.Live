@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import VaultItemCard from "../components/cards/VaultItemCard";
+import ShopCard from "../components/cards/ShopCard";
 import AddToBasket from "../components/basket/AddToBasket";
 import EnquiryForm from "../components/forms/EnquiryForm";
 import CardGrid from "../components/layout/CardGrid";
@@ -11,8 +12,15 @@ import CategoryNav from "../components/ui/CategoryNav";
 import ContentState from "../components/ui/ContentState";
 import MediaFrame from "../components/ui/MediaFrame";
 import Prose from "../components/ui/Prose";
-import { getOpenVaultItemBySlug, getOpenVaultItems, getVaultCategories } from "../lib/queries";
-import { normalizeVaultItem } from "../lib/normalise";
+import {
+  getOpenShopByArtistSlug,
+  getOpenShopBySlug,
+  getOpenShops,
+  getOpenVaultItemBySlug,
+  getOpenVaultItems,
+  getVaultCategories,
+} from "../lib/queries";
+import { normalizeShop, normalizeVaultItem } from "../lib/normalise";
 import { gateStatus, usePageTitle } from "../lib/resourceState";
 import useDirectusResource from "../lib/useDirectusResource";
 import "./CorePages.css";
@@ -20,10 +28,20 @@ import { useBasket } from "../lib/basket";
 import { checkoutEnabled, clearPendingCheckout } from "../lib/checkout";
 import { contactEmail } from "../lib/forms";
 import { recordPath } from "../lib/paths";
-import { MARKETPLACE_CATEGORY_SLUGS, MARKETPLACE_PATH } from "../lib/marketplace";
+import {
+  isMarketplaceItem,
+  MARKETPLACE_CATEGORY_SLUGS,
+  MARKETPLACE_PATH,
+  SHOPS_PATH,
+  shopProducts,
+} from "../lib/marketplace";
 
 
 const identity = (record) => record;
+
+// The name shown for a product's shop. Products without a shop are the collective's.
+const HOUSE_SHOP_NAME = "UpsetXociety";
+const shopNameOf = (item) => item.shop?.name || HOUSE_SHOP_NAME;
 
 function nameFromSlug(slug) {
   const text = slug.replace(/-/g, " ");
@@ -68,9 +86,11 @@ export function VaultPage() {
 
   if (gate !== "success") return <PageState status={gate} />;
 
-  const categories = ["All", ...new Set(items.data.map((item) => item.category).filter(Boolean))];
+  // The Vault lists the open items an editor left (or switched) on with "Show in Vault".
+  const vaultItems = items.data.filter((item) => item.showInVault);
+  const categories = ["All", ...new Set(vaultItems.map((item) => item.category).filter(Boolean))];
   const visible =
-    activeCategory === "All" ? items.data : items.data.filter((item) => item.category === activeCategory);
+    activeCategory === "All" ? vaultItems : vaultItems.filter((item) => item.category === activeCategory);
 
   return (
     <main className="core-page page-content">
@@ -92,6 +112,7 @@ export function VaultPage() {
 
 function MarketplaceListing({ categorySlug }) {
   const navigate = useNavigate();
+  const [activeShop, setActiveShop] = useState("All");
   const items = useDirectusResource(getOpenVaultItems, [], normalizeVaultItem);
   const { data: categories } = useDirectusResource(getVaultCategories, [], identity);
   const marketCategories = categories.filter((category) => MARKETPLACE_CATEGORY_SLUGS.includes(category.slug));
@@ -103,8 +124,11 @@ function MarketplaceListing({ categorySlug }) {
   const gate = gateStatus(items);
   if (gate !== "success") return <PageState status={gate} />;
 
-  const marketItems = items.data.filter((item) => MARKETPLACE_CATEGORY_SLUGS.includes(item.categorySlug));
-  const visible = active ? marketItems.filter((item) => item.categorySlug === active.slug) : marketItems;
+  const marketItems = items.data.filter(isMarketplaceItem);
+  const inCategory = active ? marketItems.filter((item) => item.categorySlug === active.slug) : marketItems;
+  const visible = activeShop === "All" ? inCategory : inCategory.filter((item) => shopNameOf(item) === activeShop);
+  // The shop filter appears once products come from more than one shop.
+  const shopNames = [...new Set(marketItems.map(shopNameOf))].sort((a, b) => a.localeCompare(b));
   const labels = ["All", ...new Set([...marketCategories.map((category) => category.name), ...(active ? [active.name] : [])])];
 
   return (
@@ -123,7 +147,19 @@ function MarketplaceListing({ categorySlug }) {
           navigate(target ? recordPath(MARKETPLACE_PATH, target.slug) : MARKETPLACE_PATH);
         }}
       />
+      {shopNames.length > 1 && (
+        <CategoryNav
+          title="Shop"
+          label="Filter the Marketplace by shop"
+          categories={["All", ...shopNames]}
+          activeCategory={activeShop}
+          onChange={setActiveShop}
+        />
+      )}
       <ItemGrid items={visible} basePath={MARKETPLACE_PATH} />
+      <p className="core-notice">
+        <Link to={SHOPS_PATH}>See every shop →</Link>
+      </p>
     </main>
   );
 }
@@ -156,6 +192,8 @@ function VaultObject({ slug, basePath, sectionLabel }) {
   const availability = availabilityLabel(item, canBuy);
   // When buying isn't possible, the price (if any) goes in the header line instead.
   const headerPrice = !canBuy && !item.soldOut ? item.priceLabel : "";
+  // Artist shops take payments from Marketplace stage 3; until then their products are enquiry-only.
+  const awaitingPayments = !item.fromHouse && item.status === "available" && item.price !== null && item.inventory > 0;
 
   return (
     <main className="core-detail page-content">
@@ -171,6 +209,11 @@ function VaultObject({ slug, basePath, sectionLabel }) {
         )}
 
         <div className="core-detail__body">
+          {item.shop && (
+            <p className="core-detail__credits">
+              From <Link to={recordPath(SHOPS_PATH, item.shop.slug)}>{item.shop.name}</Link>
+            </p>
+          )}
           {item.artists.length > 0 && (
             <ul className="core-detail__credits" aria-label="Artists">
               {item.artists.map((artist) => (
@@ -183,6 +226,9 @@ function VaultObject({ slug, basePath, sectionLabel }) {
           )}
           <Prose className="core-detail__body" paragraphs={item.description} />
           {availability && <p className="core-notice">{availability}</p>}
+          {awaitingPayments && checkoutEnabled && (
+            <p className="core-notice">Online payment for {item.shop.name} isn't switched on yet. Ask about buying it below.</p>
+          )}
           {/* The story comes first; the basket control sits under it. `section`
               is where the basket's link back to this item points. */}
           {canBuy && <AddToBasket item={item} section={basePath === "/vault" ? "vault" : "marketplace"} />}
@@ -230,6 +276,10 @@ function VaultObject({ slug, basePath, sectionLabel }) {
           {
             label: "Artists",
             items: item.artists.map((artist) => ({ to: recordPath("/artists", artist.slug), label: `Meet ${artist.name}` })),
+          },
+          {
+            label: "Shop",
+            items: item.shop ? [{ to: recordPath(SHOPS_PATH, item.shop.slug), label: `More from ${item.shop.name}` }] : [],
           },
           { label: sectionLabel, items: [{ to: basePath, label: `Back to the ${sectionLabel.toLowerCase()}` }] },
         ]}
@@ -299,4 +349,100 @@ export function LegacyShopRedirect() {
   const { search, hash } = useLocation();
   const to = slug ? recordPath(MARKETPLACE_PATH, slug) : MARKETPLACE_PATH;
   return <Navigate to={`${to}${search}${hash}`} replace />;
+}
+
+// ------------------------------------------------------------------ shops
+
+// /shops: every open shop.
+export function ShopsPage() {
+  usePageTitle("Shops");
+  const shops = useDirectusResource(getOpenShops, [], normalizeShop);
+  const gate = gateStatus(shops);
+  if (gate !== "success") return <PageState status={gate} />;
+
+  // The house shop first, then the artists' shops by name (the query sorts by name).
+  const list = shops.data.filter(Boolean);
+  const ordered = [...list.filter((shop) => shop.isHouse), ...list.filter((shop) => !shop.isHouse)];
+
+  return (
+    <main className="core-page page-content">
+      <PageIntro
+        eyebrow="Marketplace"
+        title="Shops"
+        description="Artists in the haus run their own shops. Each sale goes to the shop that made it."
+      />
+      {ordered.length ? (
+        <CardGrid min="240px">
+          {ordered.map((shop) => (
+            <ShopCard key={shop.slug} {...shop} to={recordPath(SHOPS_PATH, shop.slug)} />
+          ))}
+        </CardGrid>
+      ) : (
+        <ContentState status="empty" />
+      )}
+      <RelatedRail groups={[{ label: "Marketplace", items: [{ to: MARKETPLACE_PATH, label: "Everything in the Marketplace" }] }]} />
+    </main>
+  );
+}
+
+// One shop's page: banner, name, intro and its products. The same page is at /shops/<shop>
+// and /artists/<artist>/shop.
+function ShopView({ shopResource, notFoundTo, notFoundLabel }) {
+  const shop = shopResource.data;
+  const items = useDirectusResource(getOpenVaultItems, [], normalizeVaultItem, "shop-items");
+  usePageTitle(shop?.name || "Shop");
+
+  const gate = gateStatus(shopResource);
+  if (gate !== "success") return <PageState status={gate} />;
+  if (!shop) return <PageState status="notFound" actionTo={notFoundTo} actionLabel={notFoundLabel} />;
+
+  const products = items.status === "success" ? shopProducts(shop, items.data) : [];
+
+  return (
+    <main className="core-page page-content shop-page">
+      {shop.banner && (
+        <MediaFrame ratio="3 / 1">
+          <img src={shop.banner} alt={shop.bannerAlt} />
+        </MediaFrame>
+      )}
+      <PageIntro eyebrow="Shop" title={shop.name} description={shop.intro[0] || ""} />
+      {shop.intro.length > 1 && <Prose className="core-detail__body" paragraphs={shop.intro.slice(1)} />}
+      {shop.artist && (
+        <p className="core-notice">
+          Run by <Link to={recordPath("/artists", shop.artist.slug)}>{shop.artist.name}</Link>
+        </p>
+      )}
+      {items.status === "loading" ? <ContentState status="loading" /> : <ItemGrid items={products} basePath={MARKETPLACE_PATH} />}
+      <RelatedRail
+        groups={[
+          {
+            label: "Marketplace",
+            items: [
+              { to: SHOPS_PATH, label: "All shops" },
+              { to: MARKETPLACE_PATH, label: "Everything in the Marketplace" },
+            ],
+          },
+        ]}
+      />
+    </main>
+  );
+}
+
+// /shops/:slug
+export function ShopPage() {
+  const { slug } = useParams();
+  const shop = useDirectusResource(({ signal }) => getOpenShopBySlug(slug, { signal }), null, normalizeShop, slug);
+  return <ShopView key={slug} shopResource={shop} notFoundTo={SHOPS_PATH} notFoundLabel="See all shops" />;
+}
+
+// /artists/:slug/shop: the shop run by that artist.
+export function ArtistShopPage() {
+  const { slug } = useParams();
+  const shop = useDirectusResource(
+    ({ signal }) => getOpenShopByArtistSlug(slug, { signal }),
+    null,
+    normalizeShop,
+    `artist-shop:${slug}`
+  );
+  return <ShopView key={slug} shopResource={shop} notFoundTo={recordPath("/artists", slug)} notFoundLabel="Back to the artist" />;
 }

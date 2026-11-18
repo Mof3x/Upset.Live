@@ -121,9 +121,13 @@ objects.
   `listenLinks` (`[{ url, label }]` from the `listen_links` repeater of `{ platform, url }`). Only `http`/`https`
   addresses are kept, so a stored `javascript:` link never becomes a link. The label is the platform's name, or the
   site's host name for "Other".
+- **Shops.** `normalizeShop()` turns a `shops` record into `{ slug, name, intro, banner, artist, isHouse }`.
+  `normalizeVaultItem()` adds `shop` (`{ slug, name }`, or `null` for a house product), `fromHouse` and
+  `showInVault`. The queries are `getOpenShops`, `getOpenShopBySlug` and `getOpenShopByArtistSlug`;
+  `openVault` also requires "no shop, or an open shop".
 - **Price and stock.** `normalizeVaultItem()` adds `price` (a number, or `null` when empty, zero or not a number;
   Directus sends numerics as strings such as `"45.00"`), `priceLabel` (`£45.00`), `inventory` (empty counts as 0),
-  `buyable` (status `available`, a price and at least one in stock) and `soldOut` (status `available`, a price, no
+  `buyable` (status `available`, a price, at least one in stock, and a house product until artist shops can take payments) and `soldOut` (status `available`, a price, no
   stock). The same rule applies in the Marketplace and the Vault. The query must request both fields, and the Public role
   must be able to read them: a refused field makes the request fall back to `fields=*`, which drops the category and
   empties the Marketplace.

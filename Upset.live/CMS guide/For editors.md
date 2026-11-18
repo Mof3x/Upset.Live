@@ -171,6 +171,17 @@ item: the price comes from Directus.
   hand if it is for sale again.
 - Every open item keeps a "Request information" form for questions; those arrive in hello@upset.live.
 
+### Shops
+
+The Marketplace is a shop of shops. Each artist can run a shop (**Shops** collection), and the collective has its own,
+**UpsetXociety**. A product's **Shop** field says who sells it; leave it empty for the collective's own products.
+
+- A shop and its products appear only when the shop's **Status** is **Open**.
+- Products from artists' shops are always in the Marketplace. They're in the Vault only when **Show in Vault** is on.
+  It's on by default, so switch it off for things that belong only in the Marketplace.
+- For now only the collective's products can be bought online. Artists' products show their price with a
+  "Request information" form until artists can connect their own Stripe accounts.
+
 ### Rules
 
 - A Closed item may only be credited to artists marked as collective members. Directus refuses the save otherwise.

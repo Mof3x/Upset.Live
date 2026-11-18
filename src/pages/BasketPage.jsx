@@ -51,6 +51,7 @@ function checkLine(line, live, gate) {
     unitPrice: live.price,
     title: live.title || line.title,
     image: live.image || line.image,
+    shopName: live.shop?.name || "",
   };
 }
 
@@ -76,6 +77,8 @@ function BasketLine({ line, onQuantity, onRemove }) {
         <h2 className="basket-line__title">
           <Link to={path}>{line.title || line.slug}</Link>
         </h2>
+        {/* Which shop it's from (house products without a shop show nothing). */}
+        {line.shopName && <p className="basket-line__note">From {line.shopName}</p>}
         {line.unitPrice !== null && <p className="basket-line__price">{formatPrice(line.unitPrice)} each</p>}
         {note && <p className={line.state === "checking" || line.state === "reduced" ? "basket-line__note" : "basket-error"}>{note}</p>}
 

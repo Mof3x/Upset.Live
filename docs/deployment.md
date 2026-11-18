@@ -108,6 +108,9 @@ Payments run through a Cloudflare Worker in `workers/checkout` and Stripe's host
   the unit back: change `inventory` in Directus by hand if the item returns to stock.
 - **Basket limits:** 10 different items, 10 of each, per checkout.
 - **Not built yet:** automatic order records in Directus.
+- **Marketplace stage 2 order.** Run `mk2-shops.ps1` in Directus first, then deploy the site. The new site asks for
+  `vault_items.shop_id` and filters on it, so before the script runs the Vault and Marketplace show "not open yet".
+  The Worker needs no change in stage 2.
 
 ## Troubleshooting the live site
 

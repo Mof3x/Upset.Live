@@ -102,7 +102,7 @@ import {
   normalizeWork,
 } from "../lib/normalise";
 import useDirectusResource from "../lib/useDirectusResource";
-import { MARKETPLACE_CATEGORY_SLUGS, MARKETPLACE_PATH } from "../lib/marketplace";
+import { isMarketplaceItem, MARKETPLACE_CATEGORY_SLUGS, MARKETPLACE_PATH } from "../lib/marketplace";
 import { recordPath } from "../lib/paths";
 import "./HomePage.css";
 import "./HomeHub.css";
@@ -236,11 +236,11 @@ export default function HomePage() {
   const entryItems = ok(journal).map(asEntry);
   const artistItems = ok(artists).map(asArtist);
   const openItems = ok(vault);
-  const marketItems = openItems.filter((item) => MARKETPLACE_CATEGORY_SLUGS.includes(item.categorySlug));
+  const marketItems = openItems.filter(isMarketplaceItem);
   const marketPick = marketItems.find((item) => item.buyable) || marketItems[0];
   const market = marketPick ? asObject(marketPick, MARKETPLACE_PATH) : null;
   const vaultItems = openItems
-    .filter((item) => !MARKETPLACE_CATEGORY_SLUGS.includes(item.categorySlug))
+    .filter((item) => item.showInVault && !MARKETPLACE_CATEGORY_SLUGS.includes(item.categorySlug))
     .map((item) => asObject(item, "/vault"));
   const reads = [...textItems, ...entryItems];
 

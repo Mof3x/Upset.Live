@@ -1,6 +1,6 @@
 # Marketplace plan
 
-*Written 17/11/2026, updated 17/11 (one basket, one Checkout button) and 18/11 (answers to the open questions). Nothing here is built yet.*
+*Written 17/11/2026, updated 17/11 (one basket, one Checkout button) and 18/11 (answers to the open questions; stage 1 done, stage 2 built).*
 
 ## What we're building
 
@@ -93,9 +93,14 @@ Each stage can go live on its own. The house shop keeps selling throughout.
   - "from *Shop*" on product cards;
   - Marketplace filters by category and by shop;
   - one basket for everything; each line says which shop it's from.
-- **Worker:** one Checkout holds every line and returns one Stripe page per shop, in order. The site walks the buyer
-  through them (`/order/next`), and the basket remembers what's paid. Artist shops show products as
-  **enquiry-only** until stage 3, so in this stage every payment still goes to the house shop.
+- **Worker: no change in this stage** (changed 18/11 while building). Artist products stay **enquiry-only**
+  until stage 3, so every payment still goes to the house shop. The Worker's Directus policy is narrowed so it can
+  only see house products. The one-after-another Stripe pages (`/order/next`, remembering what's paid) move to
+  stage 3: they only matter once a second shop can take money, and they can then be tested end to end with a test
+  connected account.
+- **Built 18/11/2026** (branch `marketplace`): the website parts above, and `mk2-shops.ps1` in the
+  `UpsetXociety-ops` folder (Manifest, Execute, Verify, Undo; offline simulation 43/43). Order: run the script,
+  then deploy the site.
 
 ### Stage 3: Artists connect Stripe
 
@@ -115,8 +120,9 @@ Each stage can go live on its own. The house shop keeps selling throughout.
   - Once a shop has a Stripe account, the link can only continue *that* account, never swap in another. Changing
     the account needs an admin. This stops a leaked link from redirecting an artist's payouts.
   - The token is visible only to that artist and admins.
-- **Checkout:** each artist shop's page in the sequence is created on that artist's account (direct charge), with the
-  same stock holds. Abandoned checkouts are released through the connected-account webhook.
+- **Checkout:** one Checkout holds every line, then returns one Stripe page per shop, in order (moved here from
+  stage 2). The site walks the buyer through them (`/order/next`), and the basket remembers what's paid. Each artist
+  shop's page is created on that artist's account (direct charge), with the same stock holds. Abandoned checkouts are released through the connected-account webhook.
 - **Directus:** the Worker may set the Stripe account id and Ready to sell on shops, and nothing else new.
 
 ### Stage 4: Artists manage their own shop

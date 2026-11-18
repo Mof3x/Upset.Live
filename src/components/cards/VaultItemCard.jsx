@@ -19,6 +19,7 @@ export default function VaultItemCard({
   soldOut,
   excerpt,
   artists = [],
+  shop = null,
   basePath = "/vault",
 }) {
   const to = recordPath(basePath, slug);
@@ -50,6 +51,13 @@ export default function VaultItemCard({
                 {artist.slug ? <Link to={recordPath("/artists", artist.slug)}>{artist.name}</Link> : artist.name}
               </span>
             ))}
+          </p>
+        )}
+
+        {/* Which shop sells it. House products without a shop set show nothing here. */}
+        {shop && (
+          <p className="work-card__artist">
+            From <Link to={recordPath("/shops", shop.slug)}>{shop.name}</Link>
           </p>
         )}
 

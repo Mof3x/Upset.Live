@@ -12,11 +12,13 @@ import TextLink from "../components/ui/TextLink";
 import ContentState from "../components/ui/ContentState";
 import "./ArtistPage.css";
 import {
+  getOpenShopByArtistSlug,
   getPublishedArtistBySlug,
   getPublishedTextsByAuthorSlug,
   getPublishedWorksByArtistSlug,
 } from "../lib/queries";
-import { normalizeArtist, normalizeText, normalizeWork } from "../lib/normalise";
+import { normalizeArtist, normalizeShop, normalizeText, normalizeWork } from "../lib/normalise";
+import { recordPath } from "../lib/paths";
 import { gateStatus, usePageTitle } from "../lib/resourceState";
 import useDirectusResource from "../lib/useDirectusResource";
 
@@ -41,6 +43,13 @@ export default function ArtistPage() {
     normalizeText,
     slug
   );
+  // The artist's shop, when they run an open one (Marketplace). Optional, like works and texts.
+  const shopResource = useDirectusResource(
+    ({ signal }) => getOpenShopByArtistSlug(slug, { signal }),
+    null,
+    normalizeShop,
+    `artist-shop:${slug}`
+  );
   const artist = artistResource.data;
   usePageTitle(artist?.name || "Artist");
 
@@ -60,6 +69,7 @@ export default function ArtistPage() {
 
   const workList = works.status === "success" ? works.data : [];
   const textList = texts.status === "success" ? texts.data : [];
+  const shop = shopResource.status === "success" ? shopResource.data : null;
 
   return (
     <main className="artist-page page-content">
@@ -93,6 +103,11 @@ export default function ArtistPage() {
           {artist.links.website && (
             <TextLink external href={artist.links.website} arrow>
               Website
+            </TextLink>
+          )}
+          {shop && (
+            <TextLink to={`${recordPath("/artists", artist.slug)}/shop`} arrow>
+              Visit {shop.name}
             </TextLink>
           )}
         </div>

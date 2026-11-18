@@ -33,6 +33,7 @@ reviewed.** See [How CMS changes are made](#how-cms-changes-are-made).
 | `razz_contributors` | `/contributors` | none: listed only when credited on a published feature | Separate from `artists` |
 | `razz_feature_contributors`, `razz_feature_files` | Feature credits and gallery | follows the feature | |
 | `vault_items`, `vault_categories` | `/vault`, `/marketplace`, the basket and checkout | `vault_classification = open_public` and `status != private` | `price`, `inventory` and `image_file_id` (the photo) are public on open items; `notes`, `location` are internal |
+| `shops` | `/shops`, shop pages, "From *Shop*" on products | `status = open` | Marketplace stage 2 (November 2026). `artist_id` (unique; empty = the house shop `upsetxociety`), `banner_file_id`, `intro`, `ready_to_sell` (set automatically from stage 3). `vault_items` gained `shop_id` (ON DELETE NO ACTION) and `show_in_vault` (default on) |
 | `vault_item_artists` | Vault credits | follows the item (and the artist must be published) | |
 | `vault_item_files` | Not used | | Points at the legacy `files` table, which has no images (see below) |
 | `vault_provenance` | Not public | | Acquisition, owners, exhibition history, condition |
@@ -79,6 +80,13 @@ private or empty-status item does. The checkout Worker logs in as the `checkout-
 **Checkout Worker** policy (`3e4abaf5-…`): read open vault items, read category slugs, update `inventory` only on
 open items (never below 0). Like every signed-in token, it also gets what the Public role can read. The Vault forms
 in the Data Studio were given dropdowns and notes (presentation only). See `workers/checkout/README.md`.
+
+**Marketplace stage 2 (prepared 18 November 2026; applied when the run record says so).** The script
+`mk2-shops.ps1` lives with the other change scripts in `UpsetXociety-ops` (outside this repo). It creates `shops` and
+the two `vault_items` fields and adds the house shop. It also adds the access rules: Public reads open shops
+(never Stripe fields), and the Public `vault_items` rule hides products of shops that aren't open. Shop banners are
+public while their shop is open. The Checkout Worker reads shops, and its `vault_items` rule only matches house
+products (no shop, or a shop without an artist). Other non-admin policies aren't changed.
 
 To check access yourself, request a collection without logging in:
 

@@ -16,9 +16,13 @@ import {
 // Directus must enforce the same rule; the frontend filter is a second layer.
 
 const published = { "filter[is_published][_eq]": "true" };
+// Open vault items whose shop is open (or that have no shop: house products). Products of a
+// draft or closed shop stay hidden; the Public permission rule in Directus does the same.
 const openVault = {
   "filter[vault_classification][_eq]": "open_public",
   "filter[status][_neq]": "private",
+  "filter[_or][0][shop_id][_null]": "true",
+  "filter[_or][1][shop_id][status][_eq]": "open",
 };
 
 const artistFields = [
@@ -113,7 +117,15 @@ const vaultItemFields = [
   "image_file_id",
   "category_id.name",
   "category_id.slug",
+  // The shop that sells it (empty = the house shop), and whether it's also in the Vault.
+  "show_in_vault",
+  "shop_id.slug",
+  "shop_id.name",
 ];
+
+// Shops (Marketplace stage 2). Public can read open shops only; the Stripe fields are never public.
+const shopFields = ["id", "slug", "name", "intro", "banner_file_id", "artist_id.slug", "artist_id.name"];
+const openShop = { "filter[status][_eq]": "open" };
 
 // Legacy `files` table (work_files, razz_feature_files point here, not at directus_files).
 // On the live database (07/10/2026) it has only an `id` column, so these galleries stay empty.
@@ -494,6 +506,23 @@ export async function getOpenVaultItemBySlug(slug, options = {}) {
   if (!item) return null;
   await attachVaultRelations(item, options);
   return item;
+}
+
+export function getOpenShops(options = {}) {
+  return getCollection("shops", collectionOptions(shopFields, { ...openShop, sort: "name" }, options));
+}
+
+export function getOpenShopBySlug(slug, options = {}) {
+  return getItemBySlug("shops", slug, collectionOptions(shopFields, openShop, options));
+}
+
+// The open shop run by the published artist with this slug, or null.
+export async function getOpenShopByArtistSlug(artistSlug, options = {}) {
+  const shops = await getCollection(
+    "shops",
+    collectionOptions(shopFields, { ...openShop, "filter[artist_id][slug][_eq]": artistSlug, limit: "1" }, options)
+  );
+  return Array.isArray(shops) && shops.length ? shops[0] : null;
 }
 
 export function getVaultCategories(options = {}) {

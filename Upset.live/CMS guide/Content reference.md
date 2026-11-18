@@ -119,12 +119,26 @@ a contributor is public once credited on a published feature.
 | Status (dropdown) | Available → for sale or "Sold out", Archived → "Archived", Private → hidden | |
 | Price | Shown, and what buyers pay | In pounds. Empty = enquiry only. **Public on Open items** |
 | Inventory | "Only 3 left", "Sold out" | Goes down by itself on checkout. **Public on Open items** |
+| Shop (dropdown) | "From *Shop*" on the card and item page; the shop's page | Empty = the UpsetXociety house shop |
+| Show in Vault | On: listed in the Vault too. Off: Marketplace only | On by default. Editors and admins decide |
 | Edition number / Edition size | "No. 4 · Edition of 50" | |
 | Description | Item page | Paragraphs |
 | Location, Notes | Not shown | Internal |
 
 Links: **Vault Item Artists** (credits). **Vault Provenance** is internal. **Vault Item Files** isn't used: it points at
 an old file table that holds no images, so use the Photo field.
+
+## Shops
+
+| Field | On the site | Notes |
+|---|---|---|
+| Name | Shop page title, "From *Name*" on products | |
+| Slug | `/shops/<slug>` | Lowercase words with dashes; must be unique. `upsetxociety` is the house shop |
+| Status (dropdown) | Draft and Closed are hidden, with their products; Open is shown | New shops start as Draft |
+| Artist (dropdown) | "Run by …", and `/artists/<artist>/shop` | One shop per artist. Empty only for the house shop |
+| Intro | Top of the shop page | A few lines |
+| Banner | Wide image at the top of the shop page | Public while the shop is Open |
+| Ready to sell | Not shown | Set automatically once the shop's Stripe account can take payments (coming later) |
 
 ## Site Settings
 

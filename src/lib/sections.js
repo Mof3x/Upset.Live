@@ -18,7 +18,8 @@ export const SECTIONS = [
     to: "/marketplace",
     label: "Marketplace",
     icon: "shop",
-    // /shop is the old address (it forwards here).
+    // /shop is the old address (it forwards here); /shops are the shops of the Marketplace
+    // ("/shop" also matches them).
     match: (path) => ["/marketplace", "/shop", "/basket", "/order"].some((base) => path.startsWith(base)),
   },
   {
