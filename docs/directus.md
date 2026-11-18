@@ -81,7 +81,7 @@ private or empty-status item does. The checkout Worker logs in as the `checkout-
 open items (never below 0). Like every signed-in token, it also gets what the Public role can read. The Vault forms
 in the Data Studio were given dropdowns and notes (presentation only). See `workers/checkout/README.md`.
 
-**Marketplace stage 2 (prepared 18 November 2026; applied when the run record says so).** The script
+**Marketplace stage 2 (applied 18 November 2026; new Public rule #105 and Worker rule #106, patched #100, #96, #102).** The script
 `mk2-shops.ps1` lives with the other change scripts in `UpsetXociety-ops` (outside this repo). It creates `shops` and
 the two `vault_items` fields and adds the house shop. It also adds the access rules: Public reads open shops
 (never Stripe fields), and the Public `vault_items` rule hides products of shops that aren't open. Shop banners are
