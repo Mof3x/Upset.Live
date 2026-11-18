@@ -46,8 +46,9 @@ Every route is registered in `src/App.jsx`.
 | `/contributors/:slug` | `ContributorPage` | `RazzPages.jsx` | Contributor and their features |
 | `/vault` | `VaultPage` | `VaultPages.jsx` | Open (public) Vault items |
 | `/vault/:slug` | `VaultItemPage` | `VaultPages.jsx` | Vault item, "Add to basket" when it's for sale, and a "Request information" form |
-| `/shop` | `ShopPage` | `VaultPages.jsx` | Vault items in shop categories |
-| `/shop/:slug` | `ShopSlugPage` | `VaultPages.jsx` | A shop category (e.g. `/shop/prints`) or a single item |
+| `/marketplace` | `MarketplacePage` | `VaultPages.jsx` | Vault items in Marketplace categories |
+| `/marketplace/:slug` | `MarketplaceSlugPage` | `VaultPages.jsx` | A Marketplace category (e.g. `/marketplace/prints`) or a single item |
+| `/shop`, `/shop/:slug` | `LegacyShopRedirect` | `VaultPages.jsx` | Old Shop addresses; forward to the same page under `/marketplace` |
 | `/basket` | `BasketPage` | `BasketPage.jsx` | The visitor's basket and Checkout |
 | `/order/complete` | `OrderCompletePage` | `VaultPages.jsx` | Where Stripe returns a buyer after paying; empties the basket |
 | `/commissions` | `CommissionsPage` | `CommissionPages.jsx` | Commission disciplines |
@@ -58,16 +59,16 @@ Every route is registered in `src/App.jsx`.
 
 Notes on specific routes:
 
-- **`/shop/:slug`** is either a category or an item. If the slug is in `SHOP_CATEGORY_SLUGS` (`prints`,
-  `publications`, `posters`, `apparel`, `music-digital-releases`, `guest-works`, in `VaultPages.jsx`), it renders that
-  category; otherwise it looks up a Vault item. The Shop is the subset of open Vault items in those categories. It is
+- **`/marketplace/:slug`** is either a category or an item. If the slug is in `MARKETPLACE_CATEGORY_SLUGS` (`prints`,
+  `publications`, `posters`, `apparel`, `music-digital-releases`, `guest-works`, in `lib/marketplace.js`), it renders that
+  category; otherwise it looks up a Vault item. The Marketplace (called the Shop until November 2026) is the subset of open Vault items in those categories. It is
   not a separate collection.
-- **Buying** works the same in the Shop and the Vault. An item shows "Add to basket" when its status is Available, it
+- **Buying** works the same in the Marketplace and the Vault. An item shows "Add to basket" when its status is Available, it
   has a price and its stock (`inventory`) is at least 1, and the site was built with `VITE_CHECKOUT_ENDPOINT`. A priced
   item with no stock shows "Sold out"; an item without a price is enquiry-only. The basket is kept in the visitor's
   browser and re-checked against Directus on `/basket`. Checkout sends the whole basket to the checkout Worker
   (`workers/checkout`), which holds the stock of every line while the buyer pays on Stripe's page. Stripe returns the
-  buyer to `/order/complete` (it lives under `/order/` because `/shop/:slug` would read "complete" as an item). See
+  buyer to `/order/complete` (it lives under `/order/` because `/marketplace/:slug` would read "complete" as an item). See
   [Deployment → Checkout](deployment.md#checkout).
 - **Commissions** use a built-in list of disciplines (`DISCIPLINES` in `CommissionPages.jsx`). If the public can read
   the Directus `commission_types` collection, its names and slugs are used instead, and the descriptions stay local.

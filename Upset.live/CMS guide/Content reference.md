@@ -112,9 +112,9 @@ a contributor is public once credited on a published feature.
 
 | Field | On the site | Notes |
 |---|---|---|
-| Title, Slug | `/vault/<slug>` or `/shop/<slug>` | Slug: lowercase words with dashes |
+| Title, Slug | `/vault/<slug>` or `/marketplace/<slug>` | Slug: lowercase words with dashes |
 | Photo | Card, item page, basket, Stripe payment page | Visitors can load it only while the item is Open and not Private |
-| Category (dropdown) | Vault filter; shop categories put it in the Shop | Prints, Publications, Posters, Apparel, Music and digital releases, Guest works |
+| Category (dropdown) | Vault filter; Marketplace categories put it in the Marketplace | Prints, Publications, Posters, Apparel, Music and digital releases, Guest works |
 | Classification (dropdown) | Open can be shown; Closed never | Closed items may only credit collective members |
 | Status (dropdown) | Available → for sale or "Sold out", Archived → "Archived", Private → hidden | |
 | Price | Shown, and what buyers pay | In pounds. Empty = enquiry only. **Public on Open items** |

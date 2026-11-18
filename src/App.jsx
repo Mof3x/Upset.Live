@@ -20,7 +20,14 @@ import {
   ContributorsPage,
   ContributorPage,
 } from "./pages/RazzPages";
-import { VaultPage, VaultItemPage, ShopPage, ShopSlugPage, OrderCompletePage } from "./pages/VaultPages";
+import {
+  VaultPage,
+  VaultItemPage,
+  MarketplacePage,
+  MarketplaceSlugPage,
+  LegacyShopRedirect,
+  OrderCompletePage,
+} from "./pages/VaultPages";
 import { CommissionsPage, CommissionDisciplinePage } from "./pages/CommissionPages";
 import { ContactPage, NewsletterPage } from "./pages/FormPages";
 import BasketPage from "./pages/BasketPage";
@@ -58,8 +65,11 @@ export default function App() {
           <Route path="/contributors/:slug" element={<ContributorPage />} />
           <Route path="/vault" element={<VaultPage />} />
           <Route path="/vault/:slug" element={<VaultItemPage />} />
-          <Route path="/shop" element={<ShopPage />} />
-          <Route path="/shop/:slug" element={<ShopSlugPage />} />
+          <Route path="/marketplace" element={<MarketplacePage />} />
+          <Route path="/marketplace/:slug" element={<MarketplaceSlugPage />} />
+          {/* The Shop was renamed the Marketplace: old links forward to the same page. */}
+          <Route path="/shop" element={<LegacyShopRedirect />} />
+          <Route path="/shop/:slug" element={<LegacyShopRedirect />} />
           <Route path="/basket" element={<BasketPage />} />
           {/* Stripe returns buyers here after paying (see workers/checkout). */}
           <Route path="/order/complete" element={<OrderCompletePage />} />

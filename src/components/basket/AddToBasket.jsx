@@ -3,11 +3,11 @@ import { Link } from "react-router-dom";
 import { MAX_QUANTITY, useBasket } from "../../lib/basket";
 import "./basket.css";
 
-// The buying control on a Shop or Vault item page: price, how many are left
+// The buying control on a Marketplace or Vault item page: price, how many are left
 // (when few), a quantity picker, "Add to basket", and what's already in the
 // basket. Only render it for items that are buyable when checkout is enabled
 // (see VaultObject in pages/VaultPages.jsx).
-// `section` ("shop" or "vault") is where the basket links back to.
+// `section` ("marketplace" or "vault") is where the basket links back to.
 export default function AddToBasket({ item, section }) {
   const { lines, add } = useBasket();
   const [quantity, setQuantity] = useState(1);

@@ -457,7 +457,7 @@ export async function getContributorWithFeatures(slug, options = {}) {
   return { ...contributor, features };
 }
 
-// ------------------------------------------------------------ vault / shop
+// ------------------------------------------------------------ vault / marketplace
 
 async function attachVaultRelations(items, options) {
   const list = (Array.isArray(items) ? items : [items]).filter(Boolean);

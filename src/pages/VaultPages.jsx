@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import VaultItemCard from "../components/cards/VaultItemCard";
 import AddToBasket from "../components/basket/AddToBasket";
 import EnquiryForm from "../components/forms/EnquiryForm";
@@ -20,7 +20,7 @@ import { useBasket } from "../lib/basket";
 import { checkoutEnabled, clearPendingCheckout } from "../lib/checkout";
 import { contactEmail } from "../lib/forms";
 import { recordPath } from "../lib/paths";
-import { SHOP_CATEGORY_SLUGS } from "../lib/shop";
+import { MARKETPLACE_CATEGORY_SLUGS, MARKETPLACE_PATH } from "../lib/marketplace";
 
 
 const identity = (record) => record;
@@ -90,46 +90,46 @@ export function VaultPage() {
   );
 }
 
-function ShopListing({ categorySlug }) {
+function MarketplaceListing({ categorySlug }) {
   const navigate = useNavigate();
   const items = useDirectusResource(getOpenVaultItems, [], normalizeVaultItem);
   const { data: categories } = useDirectusResource(getVaultCategories, [], identity);
-  const shopCategories = categories.filter((category) => SHOP_CATEGORY_SLUGS.includes(category.slug));
+  const marketCategories = categories.filter((category) => MARKETPLACE_CATEGORY_SLUGS.includes(category.slug));
   const active =
-    shopCategories.find((category) => category.slug === categorySlug) ||
+    marketCategories.find((category) => category.slug === categorySlug) ||
     (categorySlug ? { slug: categorySlug, name: nameFromSlug(categorySlug) } : null);
-  usePageTitle(active ? `${active.name} · Shop` : "Shop");
+  usePageTitle(active ? `${active.name} · Marketplace` : "Marketplace");
 
   const gate = gateStatus(items);
   if (gate !== "success") return <PageState status={gate} />;
 
-  const shopItems = items.data.filter((item) => SHOP_CATEGORY_SLUGS.includes(item.categorySlug));
-  const visible = active ? shopItems.filter((item) => item.categorySlug === active.slug) : shopItems;
-  const labels = ["All", ...new Set([...shopCategories.map((category) => category.name), ...(active ? [active.name] : [])])];
+  const marketItems = items.data.filter((item) => MARKETPLACE_CATEGORY_SLUGS.includes(item.categorySlug));
+  const visible = active ? marketItems.filter((item) => item.categorySlug === active.slug) : marketItems;
+  const labels = ["All", ...new Set([...marketCategories.map((category) => category.name), ...(active ? [active.name] : [])])];
 
   return (
     <main className="core-page page-content">
       <PageIntro
-        eyebrow={active ? "Shop" : "Editions"}
-        title={active ? active.name : "Shop"}
+        eyebrow={active ? "Marketplace" : "Editions"}
+        title={active ? active.name : "Marketplace"}
         description="Prints, publications, posters, apparel and releases from the haus. Each edition opens with its story first."
       />
       <CategoryNav
-        label="Shop categories"
+        label="Marketplace categories"
         categories={labels}
         activeCategory={active ? active.name : "All"}
         onChange={(label) => {
-          const target = shopCategories.find((category) => category.name === label);
-          navigate(target ? recordPath("/shop", target.slug) : "/shop");
+          const target = marketCategories.find((category) => category.name === label);
+          navigate(target ? recordPath(MARKETPLACE_PATH, target.slug) : MARKETPLACE_PATH);
         }}
       />
-      <ItemGrid items={visible} basePath="/shop" />
+      <ItemGrid items={visible} basePath={MARKETPLACE_PATH} />
     </main>
   );
 }
 
-export function ShopPage() {
-  return <ShopListing />;
+export function MarketplacePage() {
+  return <MarketplaceListing />;
 }
 
 function VaultObject({ slug, basePath, sectionLabel }) {
@@ -185,7 +185,7 @@ function VaultObject({ slug, basePath, sectionLabel }) {
           {availability && <p className="core-notice">{availability}</p>}
           {/* The story comes first; the basket control sits under it. `section`
               is where the basket's link back to this item points. */}
-          {canBuy && <AddToBasket item={item} section={basePath === "/vault" ? "vault" : "shop"} />}
+          {canBuy && <AddToBasket item={item} section={basePath === "/vault" ? "vault" : "marketplace"} />}
         </div>
       </section>
 
@@ -247,7 +247,7 @@ export function VaultItemPage() {
 // success_url set by the checkout Worker). Stripe emails the receipt and the
 // order is in the Stripe Dashboard, so this page says thank you and empties the
 // basket. The session_id Stripe adds to the address isn't needed here.
-// It lives under /order/ because /shop/:slug would read "complete" as an item.
+// It lives under /order/ because /marketplace/:slug would read "complete" as an item.
 export function OrderCompletePage() {
   usePageTitle("Thank you");
   const { clear } = useBasket();
@@ -274,7 +274,7 @@ export function OrderCompletePage() {
           {
             label: "Collections",
             items: [
-              { to: "/shop", label: "Back to the Shop" },
+              { to: MARKETPLACE_PATH, label: "Back to the Marketplace" },
               { to: "/vault", label: "Back to the Vault" },
             ],
           },
@@ -284,10 +284,19 @@ export function OrderCompletePage() {
   );
 }
 
-// /shop/:slug is either a shop category (e.g. /shop/prints) or a shop item.
-export function ShopSlugPage() {
+// /marketplace/:slug is either a category (e.g. /marketplace/prints) or an item.
+export function MarketplaceSlugPage() {
   const { slug } = useParams();
 
-  if (SHOP_CATEGORY_SLUGS.includes(slug)) return <ShopListing key={slug} categorySlug={slug} />;
-  return <VaultObject key={slug} slug={slug} basePath="/shop" sectionLabel="Shop" />;
+  if (MARKETPLACE_CATEGORY_SLUGS.includes(slug)) return <MarketplaceListing key={slug} categorySlug={slug} />;
+  return <VaultObject key={slug} slug={slug} basePath={MARKETPLACE_PATH} sectionLabel="Marketplace" />;
+}
+
+// The Shop was renamed the Marketplace. Old addresses (shared links, bookmarks, search results)
+// forward to the same page under /marketplace, keeping any ?query and #anchor.
+export function LegacyShopRedirect() {
+  const { slug } = useParams();
+  const { search, hash } = useLocation();
+  const to = slug ? recordPath(MARKETPLACE_PATH, slug) : MARKETPLACE_PATH;
+  return <Navigate to={`${to}${search}${hash}`} replace />;
 }

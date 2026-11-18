@@ -1,6 +1,6 @@
 # Checkout Worker
 
-A small Cloudflare Worker that takes payments for the Shop and the Vault with Stripe, and keeps the stock count
+A small Cloudflare Worker that takes payments for the Marketplace (formerly the Shop) and the Vault with Stripe, and keeps the stock count
 in Directus right. The website is static (GitHub Pages), so it can't hold a Stripe secret key. This Worker holds
 it instead.
 

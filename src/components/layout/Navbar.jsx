@@ -51,7 +51,7 @@ export default function Navbar() {
 
         <ul className="nav-section right">
           <li><Link to="/about">About</Link></li>
-          <li><Link to="/shop">Shop</Link></li>
+          <li><Link to="/marketplace">Marketplace</Link></li>
           <li><Link to="/vault">Vault</Link></li>
           {basketLabel && (
             <li className="nav-basket-item">

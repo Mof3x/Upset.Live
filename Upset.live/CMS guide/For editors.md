@@ -132,9 +132,9 @@ even for published issues. You can prepare content now.*
 The newest issue by release date is shown as the current issue. A contributor appears on the Contributors page only
 once credited on a published feature.
 
-## Vault and Shop
+## Vault and Marketplace
 
-The Vault holds objects and editions. The **Shop** is the public part of the Vault in shop categories (Prints,
+The Vault holds objects and editions. The **Marketplace** (called the Shop until November 2026) is the public part of the Vault in Marketplace categories (Prints,
 Publications, Posters, Apparel, Music and digital releases, Guest works). Vault items have no Is Published switch.
 **Classification** and **Status** (both dropdowns) decide whether an item is shown:
 

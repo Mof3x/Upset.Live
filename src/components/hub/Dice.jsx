@@ -14,7 +14,7 @@ function randomIndex(length, avoid) {
   return next;
 }
 
-// "Can't decide?": roll for something random from the archive (works, texts, journal, artists, shop).
+// "Can't decide?": roll for something random from the archive (works, texts, journal, artists, marketplace).
 export default function Dice({ pool }) {
   const [index, setIndex] = useState(null);
   const [rolling, setRolling] = useState(false);

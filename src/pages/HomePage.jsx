@@ -102,7 +102,7 @@ import {
   normalizeWork,
 } from "../lib/normalise";
 import useDirectusResource from "../lib/useDirectusResource";
-import { SHOP_CATEGORY_SLUGS } from "../lib/shop";
+import { MARKETPLACE_CATEGORY_SLUGS, MARKETPLACE_PATH } from "../lib/marketplace";
 import { recordPath } from "../lib/paths";
 import "./HomePage.css";
 import "./HomeHub.css";
@@ -205,8 +205,8 @@ const asArtist = (artist) => ({
 });
 const asObject = (item, base) => ({
   key: `${base}:${item.slug}`,
-  kind: base === "/shop" ? "Shop" : "Vault",
-  icon: base === "/shop" ? "shop" : "vault",
+  kind: base === MARKETPLACE_PATH ? "Marketplace" : "Vault",
+  icon: base === MARKETPLACE_PATH ? "shop" : "vault",
   title: item.title,
   to: recordPath(base, item.slug),
   image: item.image,
@@ -236,11 +236,11 @@ export default function HomePage() {
   const entryItems = ok(journal).map(asEntry);
   const artistItems = ok(artists).map(asArtist);
   const openItems = ok(vault);
-  const shopItems = openItems.filter((item) => SHOP_CATEGORY_SLUGS.includes(item.categorySlug));
-  const shopPick = shopItems.find((item) => item.buyable) || shopItems[0];
-  const shop = shopPick ? asObject(shopPick, "/shop") : null;
+  const marketItems = openItems.filter((item) => MARKETPLACE_CATEGORY_SLUGS.includes(item.categorySlug));
+  const marketPick = marketItems.find((item) => item.buyable) || marketItems[0];
+  const market = marketPick ? asObject(marketPick, MARKETPLACE_PATH) : null;
   const vaultItems = openItems
-    .filter((item) => !SHOP_CATEGORY_SLUGS.includes(item.categorySlug))
+    .filter((item) => !MARKETPLACE_CATEGORY_SLUGS.includes(item.categorySlug))
     .map((item) => asObject(item, "/vault"));
   const reads = [...textItems, ...entryItems];
 
@@ -253,7 +253,7 @@ export default function HomePage() {
     { to: "/journal", label: "Journal", icon: "journal", image: firstImage(entryItems), count: entryItems.length },
     { to: "/razz", label: "RazzMag", icon: "razz", image: "" },
     { to: "/vault", label: "Vault", icon: "vault", image: firstImage(vaultItems) },
-    { to: "/shop", label: "Shop", icon: "shop", image: shop?.image || "" },
+    { to: MARKETPLACE_PATH, label: "Marketplace", icon: "shop", image: market?.image || "" },
     { to: "/commissions", label: "Bookings", icon: "commissions", image: "" },
   ];
 
@@ -286,7 +286,7 @@ export default function HomePage() {
         </ul>
       </section>
 
-      <Dice pool={[...workItems, ...reads, ...artistItems, ...(shop ? [shop] : []), ...vaultItems]} />
+      <Dice pool={[...workItems, ...reads, ...artistItems, ...(market ? [market] : []), ...vaultItems]} />
 
       <section className="hub-home__columns" aria-label="Newest and join">
         <div className="hub-column">

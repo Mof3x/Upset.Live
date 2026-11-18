@@ -40,7 +40,7 @@ export default function Footer() {
   const supportLinks = [
     { label: "Newsletter", to: "/newsletter" },
     { label: "Bookings and commissions", to: "/commissions" },
-    { label: "Print editions", to: "/shop/prints" },
+    { label: "Print editions", to: "/marketplace/prints" },
     { label: "Contact", to: "/contact" },
   ];
 

@@ -116,14 +116,14 @@ export default function BasketPage() {
   if (!lines.length) {
     return (
       <main className="core-page page-content">
-        <PageIntro eyebrow="Shop" title="Basket" description="Your basket is empty." />
+        <PageIntro eyebrow="Marketplace" title="Basket" description="Your basket is empty." />
         <RelatedRail
           title="Find something"
           groups={[
             {
               label: "Collections",
               items: [
-                { to: "/shop", label: "Browse the Shop" },
+                { to: "/marketplace", label: "Browse the Marketplace" },
                 { to: "/vault", label: "Browse the Vault" },
               ],
             },
@@ -201,12 +201,12 @@ export default function BasketPage() {
 
   return (
     <main className="core-page page-content">
-      <PageIntro eyebrow="Shop" title="Basket" description="Prices and stock are checked again when you check out." />
+      <PageIntro eyebrow="Marketplace" title="Basket" description="Prices and stock are checked again when you check out." />
 
       {!checkoutEnabled && (
         <p className="core-notice">Online payment isn't switched on yet. Use "Request information" on an item's page instead.</p>
       )}
-      {gate === "closed" && <p className="core-notice">The shop isn't open yet, so prices can't be checked.</p>}
+      {gate === "closed" && <p className="core-notice">The Marketplace isn't open yet, so prices can't be checked.</p>}
       {gate === "error" && (
         <p className="core-notice">
           Prices and stock couldn't be checked.{" "}

@@ -328,7 +328,7 @@ export function normalizeVaultItem(record = {}) {
     price,
     priceLabel: price ? priceFormat.format(price) : "",
     inventory,
-    // The rule for selling, the same in the Shop and the Vault:
+    // The rule for selling, the same in the Marketplace and the Vault:
     // - buyable: marked available, has a price and at least one in stock.
     // - soldOut: has a price but no stock (including a unit held at checkout).
     // - no price: enquiry only, which is how a Vault piece stays off sale.

@@ -124,9 +124,9 @@ objects.
 - **Price and stock.** `normalizeVaultItem()` adds `price` (a number, or `null` when empty, zero or not a number;
   Directus sends numerics as strings such as `"45.00"`), `priceLabel` (`£45.00`), `inventory` (empty counts as 0),
   `buyable` (status `available`, a price and at least one in stock) and `soldOut` (status `available`, a price, no
-  stock). The same rule applies in the Shop and the Vault. The query must request both fields, and the Public role
+  stock). The same rule applies in the Marketplace and the Vault. The query must request both fields, and the Public role
   must be able to read them: a refused field makes the request fall back to `fields=*`, which drops the category and
-  empties the Shop.
+  empties the Marketplace.
 
 ## `useDirectusResource`: loading in components
 

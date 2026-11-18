@@ -14,11 +14,12 @@ export const SECTIONS = [
   },
   { key: "vault", to: "/vault", label: "Vault", icon: "vault", match: (path) => path.startsWith("/vault") },
   {
-    key: "shop",
-    to: "/shop",
-    label: "Shop",
+    key: "marketplace",
+    to: "/marketplace",
+    label: "Marketplace",
     icon: "shop",
-    match: (path) => ["/shop", "/basket", "/order"].some((base) => path.startsWith(base)),
+    // /shop is the old address (it forwards here).
+    match: (path) => ["/marketplace", "/shop", "/basket", "/order"].some((base) => path.startsWith(base)),
   },
   {
     key: "about",

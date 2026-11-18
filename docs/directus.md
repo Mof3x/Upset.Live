@@ -32,7 +32,7 @@ reviewed.** See [How CMS changes are made](#how-cms-changes-are-made).
 | `razz_features` | Feature pages | `is_published` | `issue_id` puts a feature in an issue |
 | `razz_contributors` | `/contributors` | none: listed only when credited on a published feature | Separate from `artists` |
 | `razz_feature_contributors`, `razz_feature_files` | Feature credits and gallery | follows the feature | |
-| `vault_items`, `vault_categories` | `/vault`, `/shop`, the basket and checkout | `vault_classification = open_public` and `status != private` | `price`, `inventory` and `image_file_id` (the photo) are public on open items; `notes`, `location` are internal |
+| `vault_items`, `vault_categories` | `/vault`, `/marketplace`, the basket and checkout | `vault_classification = open_public` and `status != private` | `price`, `inventory` and `image_file_id` (the photo) are public on open items; `notes`, `location` are internal |
 | `vault_item_artists` | Vault credits | follows the item (and the artist must be published) | |
 | `vault_item_files` | Not used | | Points at the legacy `files` table, which has no images (see below) |
 | `vault_provenance` | Not public | | Acquisition, owners, exhibition history, condition |

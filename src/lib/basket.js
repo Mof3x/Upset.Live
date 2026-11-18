@@ -50,7 +50,8 @@ export function cleanLines(value) {
       quantity: line.quantity,
       title: typeof line.title === "string" ? line.title : "",
       image: typeof line.image === "string" ? line.image : "",
-      section: line.section === "vault" ? "vault" : "shop",
+      // Where the line links back to. Baskets saved before the rename say "shop"; they now open the Marketplace.
+      section: line.section === "vault" ? "vault" : "marketplace",
     }));
 }
 

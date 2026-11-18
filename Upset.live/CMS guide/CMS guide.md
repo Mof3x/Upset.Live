@@ -60,7 +60,7 @@ like posting: don't publish test content, and check the page afterwards.
 
 Artists can't publish. Editors publish when a record is ready.
 
-Vault objects work differently. See [For editors → Vault and Shop](For%20editors.md#vault-and-shop).
+Vault objects work differently. See [For editors → Vault and Marketplace](For%20editors.md#vault-and-marketplace).
 
 ### 2. Every record needs a slug
 
@@ -113,7 +113,7 @@ until the artist is published too.
 | About → Ethos | The published text with the slug `ethos` |
 | Journal | Journal |
 | Razz magazine | Razz Issues, Razz Features, Razz Contributors *(not open to the public yet)* |
-| Vault and Shop | Vault Items (and Vault Item Artists for credits); selling is explained in [For editors → Vault and Shop](For%20editors.md#vault-and-shop) |
+| Vault and Marketplace | Vault Items (and Vault Item Artists for credits); selling is explained in [For editors → Vault and Marketplace](For%20editors.md#vault-and-marketplace) |
 | Commissions | A built-in list of disciplines, with example works from matching work categories |
 | Footer statement and social links | Site Settings |
 | About page text, homepage quote, menus | Built into the website; ask a developer to change them |
@@ -127,7 +127,7 @@ The contact, commission, newsletter and "Request information" forms currently op
 **hello@upset.live**, pre-filled with the visitor's answers. Nothing from the forms is stored in Directus yet, so
 someone needs to check that inbox.
 
-Shop orders don't use these forms: Stripe emails each sale, and the Stripe Dashboard lists them under **Payments**.
+Marketplace orders don't use these forms: Stripe emails each sale, and the Stripe Dashboard lists them under **Payments**.
 
 ## Getting help
 
