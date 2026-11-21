@@ -395,9 +395,10 @@ async function createStripeSession(env, lines, items, held, returnOrigin) {
   const currency = String(env.CURRENCY || "gbp").toLowerCase();
   const params = new URLSearchParams();
   params.set("mode", "payment"); // a one-off payment, not a subscription
-  // Cards only (this includes Apple Pay and Google Pay). Bank-debit methods
-  // are left out because they can fail days later, after the hold has gone.
-  params.append("payment_method_types[]", "card");
+  // Which payment methods buyers see is set in the Stripe Dashboard (Settings ->
+  // Payment methods); newer Stripe accounts refuse a list sent from here. Keep it
+  // to cards, Apple Pay, Google Pay and Link there: bank debits can fail days later,
+  // after the hold has gone.
 
   // One receipt line per basket line: the item's title at its Directus price.
   // Stripe wants amounts in pence, so £45.00 becomes 4500.
