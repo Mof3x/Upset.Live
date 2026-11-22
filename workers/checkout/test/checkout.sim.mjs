@@ -298,7 +298,7 @@ resetWorld();
   check("answer carries CORS for upset.live", r.headers.get("Access-Control-Allow-Origin") === "https://upset.live");
   check("two units held (3 -> 1)", item("i-print").inventory === 1);
   const p = stripeCalls[0];
-  check("Stripe: payment mode, cards only", p.get("mode") === "payment" && p.getAll("payment_method_types[]").join() === "card");
+  check("Stripe: payment mode; payment methods left to the Dashboard (newer accounts refuse payment_method_types)", p.get("mode") === "payment" && !p.has("payment_method_types[]"));
   check("Stripe: £45.00 -> 4500 pence in gbp, quantity 2", p.get("line_items[0][price_data][unit_amount]") === "4500" && p.get("line_items[0][price_data][currency]") === "gbp" && p.get("line_items[0][quantity]") === "2");
   check("Stripe: the Directus title, and the item id on the line", p.get("line_items[0][price_data][product_data][name]") === "Night Print" && p.get("line_items[0][price_data][product_data][metadata][vault_item_id]") === "i-print");
   check("Stripe: holds stored on the session and the payment", p.get("metadata[holds]") === "i-print:2" && p.get("payment_intent_data[metadata][holds]") === "i-print:2");
